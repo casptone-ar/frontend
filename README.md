@@ -5,28 +5,154 @@
 ## 목차
 
 1.  [주요 기능](#주요-기능)
-2.  [프로젝트 구조](#프로젝트-구조)
-3.  [아키텍처](#아키텍처)
+2.  [시작하기](#시작하기)
+    *   [필수 조건](#필수-조건)
+    *   [프로젝트 클론 및 의존성 설치](#프로젝트-클론-및-의존성-설치)
+    *   [환경 설정](#환경-설정)
+    *   [애플리케이션 실행](#애플리케이션-실행)
+    *   [빌드 및 배포 (EAS)](#빌드-및-배포-eas)
+3.  [프로젝트 구조](#프로젝트-구조)
+4.  [아키텍처](#아키텍처)
     *   [레이어 개요](#레이어-개요)
     *   [상세 구조](#상세-구조)
     *   [데이터 흐름 및 의존성 규칙](#데이터-흐름-및-의존성-규칙)
-4.  [라우팅 구조](#라우팅-구조)
-5.  [주요 기술 스택](#주요-기술-스택)
-6.  [상태 관리 (Zustand)](#상태-관리-zustand)
-7.  [쿼리 관리 (TanStack Query)](#쿼리-관리-tanstack-query)
-8.  [컴포넌트](#컴포넌트)
+5.  [라우팅 구조](#라우팅-구조)
+6.  [주요 기술 스택](#주요-기술-스택)
+7.  [상태 관리 (Zustand)](#상태-관리-zustand)
+8.  [쿼리 관리 (TanStack Query)](#쿼리-관리-tanstack-query)
+9.  [컴포넌트](#컴포넌트)
     *   [컴포넌트 구조](#컴포넌트-구조)
     *   [컴포넌트 작성 규칙](#컴포넌트-작성-규칙)
-9.  [린트 및 코드 스타일](#린트-및-코드-스타일)
-10. [프로젝트 초기화 과정](#프로젝트-초기화-과정)
-11. [개발 가이드](#개발-가이드)
+10. [린트 및 코드 스타일](#린트-및-코드-스타일)
+11. [프로젝트 초기화 과정](#프로젝트-초기화-과정)
+12. [개발 가이드](#개발-가이드)
     *   [Zustand 스토어 작성](#zustand-스토어-작성-servicelibdomainstorets)
     *   [Service 작성](#service-작성-servicelibdomain)
     *   [Application Hook 작성](#application-hook-작성-applicationdomainactionts)
     *   [API 쿼리 함수 작성](#api-쿼리-함수-작성-serviceinboundquerydomaints)
-12. [필수 학습](#필수-학습)
-13. [라이선스](#라이선스)
+13. [필수 학습](#필수-학습)
+14. [라이선스](#라이선스)
 
+## 주요 기능
+
+*   **계층형 아키텍처**: `View`, `Application`, `Service` 레이어로 구분된 명확한 구조 (자세한 내용은 [아키텍처](#아키텍처) 섹션 참조).
+*   **라우팅**: `expo-router`를 사용한 파일 시스템 기반의 효율적인 화면 전환 및 관리.
+*   **상태 관리**: `Zustand`를 사용한 간결하고 강력한 전역 및 로컬 상태 관리. AsyncStorage를 통한 영속성 지원.
+*   **데이터 페칭 및 캐싱**: `TanStack Query (React Query)`를 활용한 효율적인 서버 상태 관리.
+*   **UI 컴포넌트**: `Tamagui`를 활용한 고성능, 스타일링 가능한 UI 컴포넌트 시스템.
+*   **인증**: Firebase 기반 인증 시스템 (익명 로그인 등) 통합.
+*   **API 통신**: `axios` 기반의 HTTP 클라이언트 및 `service/inbound/query`를 통한 체계적인 API 요청 관리.
+*   **타입스크립트**: 전체 프로젝트에 TypeScript를 적용하여 타입 안정성 및 개발 생산성 향상.
+*   **코드 품질 관리**: `Biome`을 사용한 통합 린팅 및 포맷팅.
+*   **웹뷰 지원**: 앱 내 웹 콘텐츠 표시 기능.
+
+## 시작하기
+
+이 섹션에서는 프로젝트를 로컬 환경에 설정하고 실행하는 방법을 안내합니다.
+
+### 필수 조건
+
+*   [Node.js](https://nodejs.org/) (20.19.0 LTS 버전 권장, `package.json`의 `engines` 필드 또는 개발팀 내부 버전 확인)
+*   [Yarn](https://classic.yarnpkg.com/en/docs/install) (Global yarn 설치 필요)
+*   [Expo CLI](https://docs.expo.dev/get-started/installation/): `yarn global add expo-cli`
+*   [EAS CLI](https://docs.expo.dev/eas/getting-started/#install-eas-cli) (빌드 및 제출 시 필요): `yarn global add eas-cli`
+
+*   Watchman (macOS): `brew install watchman`
+*   iOS 개발: Xcode 및 CocoaPods
+*   Android 개발: Android Studio 및 Android SDK
+
+### 프로젝트 클론 및 의존성 설치
+
+1.  **프로젝트 클론**:
+    ```bash
+    git clone <저장소_URL>
+    cd <프로젝트_디렉토리>
+    ```
+
+2.  **의존성 설치**:
+    ```bash
+    yarn install
+    # 또는 npm install
+    ```
+
+### 환경 설정
+
+1.  **Firebase 설정**:
+    *   Firebase 프로젝트를 생성하고, Android 및 iOS 앱을 추가합니다.
+    *   Android: `google-services.json` 파일을 다운로드하여 프로젝트 루트의 `google-services.json`으로 저장합니다.
+    *   iOS: `GoogleService-Info.plist` 파일을 다운로드하여 프로젝트 루트의 `GoogleService-Info.plist`로 저장합니다.
+    *   이 파일들은 `app.config.ts`에서 각 환경(development, staging, production)에 맞게 참조됩니다.
+    
+    수정 필요하면 팀장한테 문의 부탁드립니다.
+
+2.  **.env 파일 생성**:
+    프로젝트 루트에 `.env` 파일을 생성하고, 필요한 환경 변수를 설정합니다. `.env.example` 파일이 있다면 이를 복사하여 사용하세요.
+    주요 환경 변수는 다음과 같습니다 (실제 필요한 변수는 `app.config.ts` 및 `domain/sharedkernel.d.ts`의 `ProcessEnv` 타입 참조):
+    ```env
+    # .env
+    APP_VARIANT=development # 또는 staging, production
+    EXPO_PUBLIC_API_BASE_URL=http://localhost:3000/api # 백엔드 API 기본 URL
+    EXPO_PUBLIC_USE_AUTH=firebase # 또는 none
+    # EXPO_PUBLIC_MAIN_SERVER_BASE_URL=...
+    # EXPO_PUBLIC_REVENUE_CAT_PUBLIC_API_KEY_IOS=...
+    # EXPO_PUBLIC_REVENUE_CAT_PUBLIC_API_KEY_ANDROID=...
+    # EXPO_PUBLIC_PRIVACY_POLICY_URL=...
+    # EXPO_PUBLIC_SERVICE_POLICY_URL=...
+    ```
+    `app.config.ts`에서 `APP_VARIANT` 환경 변수를 사용하여 빌드 시 앱 이름, 아이콘 등을 다르게 설정할 수 있습니다.
+    왠만해선 건들 일이 없을겁니다
+
+### 로컬 빌드 및 애플리케이션 실행
+
+#### 로컬 빌드
+1. yarn install
+2. npx expo prebuild (캐시 클린 필요시 clean 추가)
+3. npx expo run:ios --device  혹은  npx expo run:android --device (캐시 클린 필요 시 --no-build-cach)
+
+#### 로컬 서버 (이미 실 기기 혹은 시뮬레이터에 빌드 파일이 컴파일되어 로컬 빌드 어플리케이션 설치가 완료된 경우)
+
+4. npx expo start 
+
+### 외부 빌드 및 배포 (EAS)
+
+Expo Application Services (EAS)를 사용하여 앱을 빌드하고 스토어에 제출할 수 있습니다. `eas.json` 파일에 빌드 프로필이 정의되어 있습니다.
+
+1.  **EAS 로그인**:
+    ```bash
+    eas login
+    ```
+
+2.  **프로젝트 설정**:
+    ```bash
+    eas project:init
+    ```
+    `eas.json`의 `extra.eas.projectId`가 자동으로 설정되거나, 수동으로 입력해야 할 수 있습니다.
+
+3.  **빌드 프로필 설정 (필요시 `eas.json` 수정)**:
+    *   `development`: 개발 클라이언트 빌드용.
+    *   `preview`: 내부 테스트 배포용.
+    *   `production`: 프로덕션 스토어 배포용. `autoIncrement`로 빌드 번호 자동 증가.
+
+4.  **빌드 실행**:
+    *   Android:
+        ```bash
+        eas build -p android --profile <profile_name>
+        # 예: eas build -p android --profile production
+        ```
+    *   iOS:
+        ```bash
+        eas build -p ios --profile <profile_name>
+        # 예: eas build -p ios --profile production
+        ```
+
+5.  **스토어 제출 (EAS Submit)**:
+    빌드가 완료되면 EAS CLI를 사용하여 스토어에 제출할 수 있습니다.
+    ```bash
+    eas submit -p <platform> --profile <profile_name> --latest
+    # 예: eas submit -p android --profile production --latest
+    ```
+
+자세한 내용은 [Expo EAS 문서](https://docs.expo.dev/eas/)를 참조하세요.
 
 ## 프로젝트 구조
     capstone/
