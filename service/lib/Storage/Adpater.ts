@@ -1,6 +1,7 @@
-import {InitializationSingleTon} from '@/service/lib/shared';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import serviceMediator from '@/service/lib/shared';
+import { InitializationSingleTon } from "@/service/lib/shared";
+import serviceMediator from "@/service/lib/shared";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+
 export class StorageServiceAdapter extends InitializationSingleTon<StorageServiceAdapter> {
   constructor() {
     super();

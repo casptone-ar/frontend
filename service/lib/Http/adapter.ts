@@ -2,17 +2,20 @@
  * HTTP 서비스 어댑터
  */
 
-import axios, {AxiosInstance, AxiosRequestConfig, AxiosResponse} from 'axios';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import {API_BASE_URL, HTTP_HEADERS, HTTP_TIMEOUT} from './consts';
-import {HttpClient, HttpRequestConfig} from './types';
-import {InitializationSingleTon} from '../shared';
-import serviceMediator from '../shared';
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import axios, { type AxiosInstance, type AxiosRequestConfig } from "axios";
+import { InitializationSingleTon } from "../shared";
+import serviceMediator from "../shared";
+import { API_BASE_URL, HTTP_HEADERS, HTTP_TIMEOUT } from "./consts";
+import type { HttpClient, HttpRequestConfig } from "./types";
 
 /**
  * HTTP 클라이언트 클래스
  */
-export class HttpServiceAdapter extends InitializationSingleTon<HttpServiceAdapter> implements HttpClient {
+export class HttpServiceAdapter
+  extends InitializationSingleTon<HttpServiceAdapter>
+  implements HttpClient
+{
   private instance: AxiosInstance;
 
   constructor() {
@@ -22,6 +25,8 @@ export class HttpServiceAdapter extends InitializationSingleTon<HttpServiceAdapt
       timeout: HTTP_TIMEOUT,
       headers: HTTP_HEADERS,
     });
+
+    serviceMediator.registerServiceForInitialization(this);
   }
 
   /**
@@ -29,7 +34,7 @@ export class HttpServiceAdapter extends InitializationSingleTon<HttpServiceAdapt
    */
   async initialize(): Promise<void> {
     this.setupInterceptors();
-    console.log('HttpService initialized');
+    console.log("HttpService initialized");
   }
 
   /**
@@ -38,33 +43,33 @@ export class HttpServiceAdapter extends InitializationSingleTon<HttpServiceAdapt
   private setupInterceptors(): void {
     // 요청 인터셉터
     this.instance.interceptors.request.use(
-      async config => {
+      async (config) => {
         // 토큰이 있으면 헤더에 추가
         try {
-          const token = await AsyncStorage.getItem('token');
+          const token = await AsyncStorage.getItem("token");
           if (token && config.headers) {
             config.headers.Authorization = `Bearer ${token}`;
           }
         } catch (error) {
-          console.error('Error getting token from AsyncStorage:', error);
+          console.error("Error getting token from AsyncStorage:", error);
         }
         return config;
       },
-      error => Promise.reject(error),
+      (error) => Promise.reject(error)
     );
 
     // 응답 인터셉터
     this.instance.interceptors.response.use(
-      response => response,
-      error => {
+      (response) => response,
+      (error) => {
         // 에러 처리
         const customError = {
-          message: error.message || 'Unknown error occurred',
+          message: error.message || "Unknown error occurred",
           status: error.response?.status,
           data: error.response?.data,
         };
         return Promise.reject(customError);
-      },
+      }
     );
   }
 
@@ -72,23 +77,42 @@ export class HttpServiceAdapter extends InitializationSingleTon<HttpServiceAdapt
    * GET 요청
    */
   async get<T = any>(url: string, config?: HttpRequestConfig): Promise<T> {
-    const response = await this.instance.get<T>(url, this.transformConfig(config));
+    const response = await this.instance.get<T>(
+      url,
+      this.transformConfig(config)
+    );
     return response.data;
   }
 
   /**
    * POST 요청
    */
-  async post<T = any>(url: string, data?: any, config?: HttpRequestConfig): Promise<T> {
-    const response = await this.instance.post<T>(url, data, this.transformConfig(config));
+  async post<T = any>(
+    url: string,
+    data?: any,
+    config?: HttpRequestConfig
+  ): Promise<T> {
+    const response = await this.instance.post<T>(
+      url,
+      data,
+      this.transformConfig(config)
+    );
     return response.data;
   }
 
   /**
    * PUT 요청
    */
-  async put<T = any>(url: string, data?: any, config?: HttpRequestConfig): Promise<T> {
-    const response = await this.instance.put<T>(url, data, this.transformConfig(config));
+  async put<T = any>(
+    url: string,
+    data?: any,
+    config?: HttpRequestConfig
+  ): Promise<T> {
+    const response = await this.instance.put<T>(
+      url,
+      data,
+      this.transformConfig(config)
+    );
     return response.data;
   }
 
@@ -96,15 +120,26 @@ export class HttpServiceAdapter extends InitializationSingleTon<HttpServiceAdapt
    * DELETE 요청
    */
   async delete<T = any>(url: string, config?: HttpRequestConfig): Promise<T> {
-    const response = await this.instance.delete<T>(url, this.transformConfig(config));
+    const response = await this.instance.delete<T>(
+      url,
+      this.transformConfig(config)
+    );
     return response.data;
   }
 
   /**
    * PATCH 요청
    */
-  async patch<T = any>(url: string, data?: any, config?: HttpRequestConfig): Promise<T> {
-    const response = await this.instance.patch<T>(url, data, this.transformConfig(config));
+  async patch<T = any>(
+    url: string,
+    data?: any,
+    config?: HttpRequestConfig
+  ): Promise<T> {
+    const response = await this.instance.patch<T>(
+      url,
+      data,
+      this.transformConfig(config)
+    );
     return response.data;
   }
 

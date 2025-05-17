@@ -2,13 +2,12 @@
  * Auth 서비스 스토어
  */
 
-import {create, createStore, useStore} from 'zustand';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import {createJSONStorage, devtools, persist} from 'zustand/middleware';
-import {immer} from 'zustand/middleware/immer';
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { createStore, useStore } from "zustand";
+import { createJSONStorage, devtools, persist } from "zustand/middleware";
 
-import {merge} from 'es-toolkit';
-import {FirebaseAuthTypes} from '@react-native-firebase/auth';
+import type { FirebaseAuthTypes } from "@react-native-firebase/auth";
+import { merge } from "es-toolkit";
 /**
  * Auth 상태 인터페이스
  */
@@ -50,44 +49,44 @@ export const createAuthStore =
   <T = FirebaseAuthTypes.User>() =>
     createStore<AuthStoreI<T>>()(
       devtools(
-        persist(
-          immer((get, set) => ({
-            user: null,
-            token: null,
-            isAuthenticated: false,
-            /**
-             * 사용자 정보 설정
-             */
-            setUser: (_user: T | null) => {
-              set({user: _user});
-            },
-
-            /**
-             * 토큰 설정
-             */
-            setToken: (_token: string | null) => {
-              set({token: _token});
-            },
-
-            /**
-             * 인증 상태 설정
-             */
-            setIsAuthenticated: (_isAuthenticated: boolean) => set({isAuthenticated: _isAuthenticated}),
-
-            /**
-             * 스토어 초기화
-             */
-            reset: () => {
-              set({...initialState});
-            },
-          })),
-          {
-            name: 'auth-store',
-            storage: createJSONStorage(() => AsyncStorage),
-            merge: (persistedState, currentState) => merge(currentState, persistedState),
+        persist((get, set) => ({
+          user: null,
+          token: null,
+          isAuthenticated: false,
+          /**
+           * 사용자 정보 설정
+           */
+          setUser: (_user: T | null) => {
+            set({ user: _user });
           },
-        ),
-      ),
+
+          /**
+           * 토큰 설정
+           */
+          setToken: (_token: string | null) => {
+            set({ token: _token });
+          },
+
+          /**
+           * 인증 상태 설정
+           */
+          setIsAuthenticated: (_isAuthenticated: boolean) =>
+            set({ isAuthenticated: _isAuthenticated }),
+
+          /**
+           * 스토어 초기화
+           */
+          reset: () => {
+            set({ ...initialState });
+          },
+        })),
+        {
+          name: "auth-store",
+          storage: createJSONStorage(() => AsyncStorage),
+          merge: (persistedState, currentState) =>
+            merge(currentState, persistedState),
+        }
+      )
     );
 
 export const AuthStore = createAuthStore();

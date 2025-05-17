@@ -5,11 +5,7 @@ export class HydrationManagerAdapter extends InitializationSingleTon<HydrationMa
   private targets: Map<string, boolean> = new Map();
   private listeners: Set<(status: boolean) => void> = new Set();
   private onCompleteListeners: Set<() => void> = new Set();
-  private previousHydrationStatus: boolean = false;
-
-  constructor() {
-    super();
-  }
+  private previousHydrationStatus = false;
 
   registerTarget(name: string): void {
     this.targets.set(name, false);
@@ -43,14 +39,18 @@ export class HydrationManagerAdapter extends InitializationSingleTon<HydrationMa
   private notifyListeners(): void {
     const currentHydrationStatus = this.isFullyHydrated();
 
-    this.listeners.forEach((listener) => listener(currentHydrationStatus));
+    for (const listener of this.listeners) {
+      listener(currentHydrationStatus);
+    }
 
     if (
       currentHydrationStatus === true &&
       this.previousHydrationStatus === false
     ) {
       const listenersToCall = new Set(this.onCompleteListeners);
-      listenersToCall.forEach((listener) => listener());
+      for (const listener of listenersToCall) {
+        listener();
+      }
     }
 
     this.previousHydrationStatus = currentHydrationStatus;

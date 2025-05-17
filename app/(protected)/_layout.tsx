@@ -1,24 +1,48 @@
-/**
- * 보호된 라우트 레이아웃
- */
-
-import React, { useEffect } from "react";
-import { Redirect, Stack } from "expo-router";
-import { useAuth } from "@application/auth/useAuth";
+import { BottomNavigationBar } from "@/View/core/BottomNavigationBar/BottomNavigationBar";
+import { Tabs } from "expo-router";
 
 /**
  * 보호된 라우트 레이아웃 컴포넌트
  */
 export default function ProtectedLayout() {
   return (
-    <Stack
+    <Tabs
+      tabBar={(props) => <BottomNavigationBar {...props} />}
       screenOptions={{
         headerShown: false,
       }}
     >
-      <Stack.Screen name="index" />
-      <Stack.Screen name="profile" />
-      <Stack.Screen name="settings" />
-    </Stack>
+      <Tabs.Screen
+        name="home"
+        options={{
+          title: "홈",
+        }}
+      />
+      <Tabs.Screen
+        name="missions"
+        options={{
+          title: "미션",
+        }}
+      />
+      <Tabs.Screen
+        name="ar"
+        options={{
+          title: "AR",
+        }}
+      />
+      <Tabs.Screen
+        name="shop"
+        options={{
+          title: "상점",
+        }}
+      />
+      <Tabs.Screen
+        name="collection"
+        options={{
+          title: "동물농장",
+          headerShown: false,
+        }}
+      />
+    </Tabs>
   );
 }

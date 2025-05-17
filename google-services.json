@@ -1,0 +1,54 @@
+{
+  "project_info": {
+    "project_number": "289504459076",
+    "project_id": "neopets-a2680",
+    "storage_bucket": "neopets-a2680.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:289504459076:android:e68871d54fe2b69e907f11",
+        "android_client_info": {
+          "package_name": "com.inlee.neopets"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "289504459076-9ni2343f46cr2g68i5410tl1v9jtgvs4.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.inlee.neopets",
+            "certificate_hash": "3f1e536440876a149d570e6679213d346b1612b9"
+          }
+        },
+        {
+          "client_id": "289504459076-24emhs24lun9cq7ko3ev1dlfvbobipsh.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA1tJnURDmNCW0bidCKEo5PtI5TMtdYur8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "289504459076-24emhs24lun9cq7ko3ev1dlfvbobipsh.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "289504459076-0t3fjbq15hu1vq7u6h3os5r6ktks8qgp.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.inlee.neopets"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

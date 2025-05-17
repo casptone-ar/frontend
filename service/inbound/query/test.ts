@@ -1,4 +1,4 @@
-import { QueryFn } from "@/domain/sharedkernel";
+import type { QueryFn } from "@/domain/sharedkernel";
 import { API } from "@/service/lib/Http/adapter";
 import { useQuery } from "@tanstack/react-query";
 

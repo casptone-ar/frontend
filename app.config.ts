@@ -1,6 +1,5 @@
 import type { ConfigContext, ExpoConfig } from "expo/config";
 
-/** @change 앱 슬러그 수정 필요 */
 const APP_SLUG = "neopets";
 
 // 환경 타입 정의
@@ -26,60 +25,44 @@ interface EnvConfig {
     backgroundColor: string;
   };
   bundleIdentifier: string;
+  googleServiceInfoPlist: string;
   googleServicesFile: string;
 }
 
 // 환경별 설정
 const ENV: Record<Environment, EnvConfig> = {
   development: {
-    /** @change 앱 이름 수정 필요 */
     appName: "[DEV] Neopets",
     icon: "./assets/icon.png",
     adaptiveIcon: {
       foregroundImage: "./assets/adaptive-icon.png",
       backgroundColor: "#ffffff",
     },
-    /** @change 번들 식별자 수정 필요 */
     bundleIdentifier: "com.inlee.neopets",
-    /** @change 파일 경로 수정 필요 */
-    googleServicesFile: "./GoogleService-Info.plist",
-    /** @change 광고 ID 수정 필요 */
-    adMob: {
-      androidAppId: "ca-app-pub-2037720801514821~1560566748",
-      iosAppId: "ca-app-pub-2037720801514821~7798672033",
-      banner: "ca-app-pub-xxxxxxxxxxxxxxxx/dev-banner",
-      interstitial: "ca-app-pub-xxxxxxxxxxxxxxxx/dev-interstitial",
-      rewarded: "ca-app-pub-xxxxxxxxxxxxxxxx/dev-rewarded",
-      rewardedInterstitial:
-        "ca-app-pub-xxxxxxxxxxxxxxxx/dev-rewarded-interstitial",
-      appOpen: "ca-app-pub-xxxxxxxxxxxxxxxx/dev-app-open",
-    },
+    googleServiceInfoPlist: "./GoogleService-Info.plist",
+    googleServicesFile: "./google-services.json",
   },
   staging: {
-    /** @change 앱 이름 수정 필요 */
     appName: "[STG] Neopets",
     icon: "./assets/icon.png",
     adaptiveIcon: {
       foregroundImage: "./assets/adaptive-icon.png",
       backgroundColor: "#ffffff",
     },
-    /** @change 번들 식별자 수정 필요 */
     bundleIdentifier: "com.inlee.neopets",
-    /** @change 파일 경로 수정 필요 */
-    googleServicesFile: "./GoogleService-Info.plist",
+    googleServiceInfoPlist: "./GoogleService-Info.plist",
+    googleServicesFile: "./google-services.json",
   },
   production: {
-    /** @change 앱 이름 수정 필요 */
     appName: "Neopets",
     icon: "./assets/icon.png",
     adaptiveIcon: {
       foregroundImage: "./assets/adaptive-icon.png",
       backgroundColor: "#ffffff",
     },
-    /** @change 번들 식별자 수정 필요 */
     bundleIdentifier: "com.inlee.neopets",
-    /** @change 파일 경로 수정 필요 */
-    googleServicesFile: "./GoogleService-Info.plist",
+    googleServiceInfoPlist: "./GoogleService-Info.plist",
+    googleServicesFile: "./google-services.json",
   },
 };
 
@@ -186,10 +169,15 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       supportsTablet: true,
       bundleIdentifier: envConfig.bundleIdentifier,
       appleTeamId: "3MNYG65CXY",
+      infoPlist: {
+        ITSAppUsesNonExemptEncryption: false,
+      },
+      googleServicesFile: envConfig.googleServiceInfoPlist,
     },
     android: {
       adaptiveIcon: envConfig.adaptiveIcon,
       package: envConfig.bundleIdentifier,
+      googleServicesFile: envConfig.googleServicesFile,
     },
     web: {
       favicon: "./assets/favicon.png",

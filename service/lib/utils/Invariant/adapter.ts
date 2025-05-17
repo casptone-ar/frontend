@@ -2,13 +2,14 @@
  * Invariant 서비스 어댑터
  */
 
-import {InitializationSingleTon} from '../../shared';
+import { InitializationSingleTon } from "@/service/lib/shared";
+import serviceMediator from "@/service/lib/shared";
 
 /**
  * Invariant 옵션 타입
  */
 type InvariantOptions = {
-  type?: 'error' | 'warning' | 'info';
+  type?: "error" | "warning" | "info";
   message?: string;
 };
 
@@ -16,21 +17,30 @@ type InvariantOptions = {
  * Invariant 서비스 클래스
  */
 export class VariantService extends InitializationSingleTon<VariantService> {
+  constructor() {
+    super();
+    serviceMediator.registerServiceForInitialization(this);
+  }
+
   /**
    * 조건이 false일 때 에러를 발생시키거나 경고를 출력합니다.
    */
-  static invariant(condition: boolean, options: InvariantOptions = {}): asserts condition {
+  static invariant(
+    condition: boolean,
+    options: InvariantOptions = {}
+  ): asserts condition {
     if (!condition) {
-      const {type = 'error', message = 'Invariant failed'} = options;
+      const { type = "error", message = "Invariant failed" } = options;
 
       switch (type) {
-        case 'warning':
+        case "warning":
           console.warn(message);
           break;
-        case 'info':
+        case "info":
           console.info(message);
           break;
-        case 'error':
+        case "error":
+          throw new Error(message);
         default:
           throw new Error(message);
       }
@@ -41,7 +51,7 @@ export class VariantService extends InitializationSingleTon<VariantService> {
    * 서비스 초기화
    */
   async initialize(): Promise<void> {
-    console.log('VariantService initialized');
+    console.log("VariantService initialized");
   }
 }
 

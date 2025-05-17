@@ -1,7 +1,6 @@
-import {createStore} from 'zustand/vanilla';
-import {devtools} from 'zustand/middleware';
-import {immer} from 'zustand/middleware/immer';
-import {useStore} from 'zustand';
+import { useStore } from "zustand";
+import { devtools } from "zustand/middleware";
+import { createStore } from "zustand/vanilla";
 
 export interface GlobalLoadingState {
   isLoading: boolean;
@@ -15,18 +14,17 @@ const initialState: GlobalLoadingState = {
   isLoading: false,
 };
 
-export const GlobalLoadingStore = createStore<GlobalLoadingState & GlobalLoadingActions>()(
-  devtools(
-    immer(set => ({
-      ...initialState,
+export const GlobalLoadingStore = createStore<
+  GlobalLoadingState & GlobalLoadingActions
+>()(
+  devtools((set) => ({
+    ...initialState,
 
-      setIsLoading: value =>
-        set(state => {
-          state.isLoading = value;
-        }),
-    })),
-    {name: 'global-loading-store'},
-  ),
+    setIsLoading: (value) =>
+      set((state) => {
+        state.isLoading = value;
+      }),
+  }))
 );
 
 export const useGlobalLoadingStore = () => {

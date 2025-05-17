@@ -1,9 +1,4 @@
-/**
- * 텍스트 코어 컴포넌트
- */
-
-import React from 'react';
-import { Text as TamaguiText, styled, GetProps } from 'tamagui';
+import { type GetProps, Text as TamaguiText, styled } from "tamagui";
 
 /**
  * 텍스트 컴포넌트 타입
@@ -16,105 +11,95 @@ export type TextProps = GetProps<typeof Text>;
  * 기본 Tamagui Text에 추가적인 스타일과 기능을 제공합니다.
  */
 export const Text = styled(TamaguiText, {
-  name: 'Text',
+  name: "Text",
 
   // 기본 스타일
-  color: '$color',
+  color: "$color",
 
   // 변형 스타일
   variants: {
     preset: {
       h1: {
-        fontSize: '$9',
-        fontWeight: 'bold',
-        lineHeight: '$9',
+        fontSize: "$9",
+        fontWeight: "bold",
       },
       h2: {
-        fontSize: '$8',
-        fontWeight: 'bold',
-        lineHeight: '$8',
+        fontSize: "$8",
+        fontWeight: "bold",
       },
       h3: {
-        fontSize: '$7',
-        fontWeight: 'bold',
-        lineHeight: '$7',
+        fontSize: "$7",
+        fontWeight: "bold",
       },
       h4: {
-        fontSize: '$6',
-        fontWeight: 'bold',
-        lineHeight: '$6',
+        fontSize: "$6",
+        fontWeight: "bold",
       },
       h5: {
-        fontSize: '$5',
-        fontWeight: 'bold',
-        lineHeight: '$5',
+        fontSize: "$5",
+        fontWeight: "bold",
       },
       h6: {
-        fontSize: '$4',
-        fontWeight: 'bold',
-        lineHeight: '$4',
+        fontSize: "$4",
+        fontWeight: "bold",
       },
       body1: {
-        fontSize: '$5',
-        lineHeight: '$5',
+        fontSize: "$5",
       },
       body2: {
-        fontSize: '$4',
-        lineHeight: '$4',
+        fontSize: "$4",
       },
       caption: {
-        fontSize: '$3',
-        lineHeight: '$3',
+        fontSize: "$3",
       },
       button: {
-        fontSize: '$4',
-        fontWeight: 'bold',
-        lineHeight: '$4',
+        fontSize: "$4",
+        fontWeight: "bold",
       },
     },
     weight: {
       light: {
-        fontWeight: '300',
+        fontWeight: "300",
       },
       regular: {
-        fontWeight: '400',
+        fontWeight: "400",
       },
       medium: {
-        fontWeight: '500',
+        fontWeight: "500",
       },
       semibold: {
-        fontWeight: '600',
+        fontWeight: "600",
       },
       bold: {
-        fontWeight: '700',
+        fontWeight: "700",
       },
     },
     align: {
       left: {
-        textAlign: 'left',
+        textAlign: "left",
       },
       center: {
-        textAlign: 'center',
+        textAlign: "center",
       },
       right: {
-        textAlign: 'right',
+        textAlign: "right",
       },
     },
     color: {
       primary: {
-        color: '$blue10',
+        color: "$blue10",
       },
       secondary: {
-        color: '$gray10',
+        color: "$gray10",
       },
       success: {
-        color: '$green10',
+        color: "$green10",
       },
       warning: {
-        color: '$yellow10',
+        color: "$yellow10",
       },
       error: {
-        color: '$red10',
+        color: "$red10",
       },
     },
   },

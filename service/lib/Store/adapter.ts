@@ -1,13 +1,12 @@
 import { HydrationManager } from "@/service/lib/Store/HydrationManager";
 import { InitializationSingleTon } from "@/service/lib/shared";
-import { createStore, StateCreator, StoreApi } from "zustand";
-import {
-  persist,
-  createJSONStorage,
-  PersistOptions,
-  PersistStorage,
-} from "zustand/middleware";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { type StateCreator, type StoreApi, createStore } from "zustand";
+import {
+  type PersistOptions,
+  createJSONStorage,
+  persist,
+} from "zustand/middleware";
 
 // StorePersist 타입이 내보내지지 않았을 수 있으므로, 필요한 부분을 직접 정의하거나 가져옵니다.
 // 실제 zustand 버전의 타입 정의를 확인하는 것이 가장 좋습니다.
@@ -28,10 +27,6 @@ type StorePersist<T> = {
 type StoreWithPersist<TState> = StoreApi<TState> & StorePersist<TState>;
 
 export class StoreServiceAdapter extends InitializationSingleTon<StoreServiceAdapter> {
-  constructor() {
-    super();
-  }
-
   /**
    * Zustand 스토어를 생성하고 영속성 및 하이드레이션 관리를 추가합니다.
    * 타입 추론은 Zustand의 createStore와 유사하게 동작합니다.

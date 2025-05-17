@@ -2,14 +2,17 @@
  * Auth 서비스 어댑터
  */
 
+import { getAuth } from "@react-native-firebase/auth";
 import { InitializationSingleTon } from "../shared";
-import auth, { getAuth } from "@react-native-firebase/auth";
+import serviceMediator from "../shared";
 /**
  * Auth 서비스 클래스
  */
 export class AuthServiceAdapter extends InitializationSingleTon<AuthServiceAdapter> {
   constructor() {
     super();
+
+    serviceMediator.registerServiceForInitialization(this);
   }
 
   async signInAnounymously() {

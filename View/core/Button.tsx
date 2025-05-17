@@ -1,9 +1,4 @@
-/**
- * 버튼 코어 컴포넌트
- */
-
-import React from 'react';
-import { Button as TamaguiButton, styled, GetProps } from 'tamagui';
+import { type GetProps, Button as TamaguiButton, styled } from "tamagui";
 
 /**
  * 버튼 컴포넌트
@@ -11,55 +6,56 @@ import { Button as TamaguiButton, styled, GetProps } from 'tamagui';
  * 기본 Tamagui Button에 추가적인 스타일과 기능을 제공합니다.
  */
 export const Button = styled(TamaguiButton, {
-  name: 'Button',
+  name: "Button",
 
   // 기본 스타일
-  borderRadius: '$4',
-  paddingVertical: '$3',
-  paddingHorizontal: '$4',
+  borderRadius: "$4",
+  paddingVertical: "$3",
+  paddingHorizontal: "$4",
 
   // 변형 스타일
   variants: {
     size: {
       small: {
-        paddingVertical: '$2',
-        paddingHorizontal: '$3',
-        fontSize: '$3',
+        paddingVertical: "$2",
+        paddingHorizontal: "$3",
+        fontSize: "$3",
       },
       medium: {
-        paddingVertical: '$3',
-        paddingHorizontal: '$4',
-        fontSize: '$4',
+        height: "$8",
+        paddingHorizontal: "$10",
+        fontSize: "$12",
+        color: "black",
       },
       large: {
-        paddingVertical: '$4',
-        paddingHorizontal: '$5',
-        fontSize: '$5',
+        paddingVertical: "$4",
+        paddingHorizontal: "$5",
+        fontSize: "$5",
       },
     },
     variant: {
       filled: {
-        backgroundColor: '$blue10',
-        color: 'white',
+        backgroundColor: "$accent1",
+        color: "$text1",
       },
       outlined: {
-        backgroundColor: 'transparent',
+        backgroundColor: "transparent",
         borderWidth: 1,
-        borderColor: '$blue10',
-        color: '$blue10',
+        borderColor: "$accent1",
+        color: "$accent1",
       },
       ghost: {
-        backgroundColor: 'transparent',
-        color: '$blue10',
+        backgroundColor: "transparent",
+        color: "$accent1",
       },
       destructive: {
-        backgroundColor: '$red10',
-        color: 'white',
+        backgroundColor: "$error",
+        color: "$text1",
       },
     },
     fullWidth: {
       true: {
-        alignSelf: 'stretch',
+        alignSelf: "stretch",
       },
     },
     disabled: {

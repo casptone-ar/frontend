@@ -1,8 +1,10 @@
-import {useState} from 'react';
+import { useState } from "react";
 
-// @TODO 필요한 권한 훅 추가
+/** @TODO 구현 필요 */
 export const useCheckAllRequiredPermissionGranted = () => {
-  const [isAllRequiredPermissionGranted, setIsAllRequiredPermissionGranted] = useState(false);
+  /** @TODO 구현 필요 */
+  const [isAllRequiredPermissionGranted, setIsAllRequiredPermissionGranted] =
+    useState(true);
 
   return {
     isAllRequiredPermissionGranted,
