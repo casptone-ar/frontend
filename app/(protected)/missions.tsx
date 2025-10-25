@@ -1,3 +1,5 @@
+// app/(protected)/missions.tsx
+
 import { ScreenContainer } from "@/View/core/ScreenContainer/ScreenContainer";
 import { SegmentedTabs } from "@/View/core/SegmentedTabs";
 import { Text } from "@/View/core/Text/Text";
@@ -7,13 +9,16 @@ import type {
   MissionFilter,
   MissionStatus,
 } from "@/domain/mission/types";
-import { useCallback, useEffect, useState } from "react"; // React import
+import { useCallback, useEffect, useState } from "react";
 import { Alert } from "react-native";
 import { XStack } from "tamagui";
 import { MissionList } from "./components/missions/MissionList";
+import { useRouter } from "expo-router";
 
 // --- Mock Data & Service ---
-// 실제로는 service/application 레이어에서 zustand 스토어 또는 react-query 훅을 통해 가져옵니다.
+// 목록 렌더링은 BaseMission 기반(MOCK_ALL_MISSIONS)
+// 일/주간 상세/별도 사용은 Mission 기반(MOCK_DAILY/ WEEKLY)
+
 const MOCK_DAILY_MISSIONS: Mission[] = [
   {
     id: "d001",
@@ -24,7 +29,11 @@ const MOCK_DAILY_MISSIONS: Mission[] = [
     currentProgress: 2500,
     unit: "보",
     rewardCoin: 10,
-    status: "in_progress",
+    status: "in-progress",
+    rewards: [{ type: "coin", amount: 10 }],
+    targetValue: 5000,
+    currentValue: 2500,
+    iconUrl: "https://via.placeholder.com/50/A0E0FF/000000?Text=DD1",
   },
   {
     id: "d002",
@@ -35,7 +44,11 @@ const MOCK_DAILY_MISSIONS: Mission[] = [
     currentProgress: 1,
     unit: "회",
     rewardCoin: 5,
-    status: "in_progress",
+    status: "in-progress",
+    rewards: [{ type: "coin", amount: 5 }],
+    targetValue: 3,
+    currentValue: 1,
+    iconUrl: "https://via.placeholder.com/50/A0FFFF/000000?Text=DD2",
   },
   {
     id: "d003",
@@ -46,7 +59,11 @@ const MOCK_DAILY_MISSIONS: Mission[] = [
     currentProgress: 0,
     unit: "회",
     rewardCoin: 2,
-    status: "incomplete",
+    status: "pending",
+    rewards: [{ type: "coin", amount: 2 }],
+    targetValue: 1,
+    currentValue: 0,
+    iconUrl: "https://via.placeholder.com/50/D0FFD0/000000?Text=DD3",
   },
 ];
 
@@ -60,7 +77,11 @@ const MOCK_WEEKLY_MISSIONS: Mission[] = [
     currentProgress: 12000,
     unit: "보",
     rewardCoin: 50,
-    status: "in_progress",
+    status: "in-progress",
+    rewards: [{ type: "coin", amount: 50 }],
+    targetValue: 35000,
+    currentValue: 12000,
+    iconUrl: "https://via.placeholder.com/50/D0A0FF/000000?Text=WW1",
   },
   {
     id: "w002",
@@ -71,7 +92,11 @@ const MOCK_WEEKLY_MISSIONS: Mission[] = [
     currentProgress: 2,
     unit: "회",
     rewardCoin: 30,
-    status: "in_progress",
+    status: "in-progress",
+    rewards: [{ type: "coin", amount: 30 }],
+    targetValue: 5,
+    currentValue: 2,
+    iconUrl: "https://via.placeholder.com/50/FFD0A0/000000?Text=WW2",
   },
 ];
 
@@ -152,26 +177,20 @@ const fetchMissions = async (filter: MissionFilter): Promise<BaseMission[]> => {
   });
 };
 
+// BaseMission 기준의 간단 목 API
 const claimMissionRewardAPI = async (
   missionId: string
-): Promise<{ success: boolean; updatedMission?: Mission; error?: string }> => {
-  console.log(`Claiming reward for mission: ${missionId}`);
+): Promise<{ success: boolean; error?: string }> => {
   return new Promise((resolve) =>
     setTimeout(() => {
-      // 모킹: 해당 미션 상태를 'completed'로 변경하고 반환
-      const allMissions = [...MOCK_DAILY_MISSIONS, ...MOCK_WEEKLY_MISSIONS];
-      const missionToUpdate = allMissions.find((m) => m.id === missionId);
-      if (missionToUpdate && missionToUpdate.status === "achieved") {
-        const updated = {
-          ...missionToUpdate,
-          status: "completed" as MissionStatus,
-        };
-        // 실제라면 MOCK_DAILY_MISSIONS 또는 MOCK_WEEKLY_MISSIONS 배열도 업데이트
-        resolve({ success: true, updatedMission: updated });
+      // 여기서는 'completed' 상태면 수령 가능으로 가정
+      const m = MOCK_ALL_MISSIONS.find((x) => x.id === missionId);
+      if (m && m.status === "completed") {
+        resolve({ success: true });
       } else {
         resolve({ success: false, error: "보상을 수령할 수 없는 미션입니다." });
       }
-    }, 700)
+    }, 600)
   );
 };
 // --- End Mock Data & Service ---
@@ -183,12 +202,8 @@ const TABS: { label: string; value: MissionFilter }[] = [
   { label: "완료된 미션", value: "completed" },
 ];
 
-/**
- * 미션 목록 화면입니다.
- * 사용자는 일일 미션과 주간 미션을 탭으로 전환하여 볼 수 있으며,
- * 각 미션의 진행 상황을 확인하고 완료된 미션의 보상을 수령할 수 있습니다.
- */
 export default function MissionsScreen() {
+  const router = useRouter();
   const [currentFilter, setCurrentFilter] = useState<MissionFilter>("all");
   const [missions, setMissions] = useState<BaseMission[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -212,7 +227,7 @@ export default function MissionsScreen() {
     loadMissions(newFilter);
   };
 
-  const handleMissionAction = (
+  const handleMissionAction = async (
     missionId: string,
     action?: "claim" | "details"
   ) => {
@@ -220,28 +235,46 @@ export default function MissionsScreen() {
     if (!mission) return;
 
     if (action === "claim") {
-      Alert.alert(
-        "보상 수령!",
-        `${mission.title} 미션의 보상을 수령합니다. (구현 필요)`
-      );
-      // TODO: 실제 보상 수령 로직 호출 및 상태 업데이트
-      // 예: MOCK_ALL_MISSIONS에서 해당 미션 상태 변경 후 loadMissions(currentFilter) 재호출
+      // 스펙상 'completed' 상태에서 수령 가능으로 가정
+      if (mission.status !== "completed") {
+        Alert.alert("보상 수령 불가", "아직 보상을 수령할 수 없는 상태입니다.");
+        return;
+      }
+
+      const snapshot = missions.map((m) => ({ ...m }));
+      try {
+        const res = await claimMissionRewardAPI(missionId);
+        if (!res.success) {
+          setMissions(snapshot);
+          Alert.alert(
+            "보상 수령 실패",
+            res.error ?? "알 수 없는 오류가 발생했습니다."
+          );
+          return;
+        }
+        Alert.alert(
+          "보상 수령 완료",
+          `${mission.title} 미션의 보상을 수령했습니다.`
+        );
+      } catch {
+        setMissions(snapshot);
+        Alert.alert(
+          "보상 수령 실패",
+          "네트워크 오류가 발생했습니다. 다시 시도해 주세요."
+        );
+      }
     } else {
-      // "details" 또는 undefined
-      Alert.alert(
-        "미션 상세",
-        `${mission.title} 미션의 상세 정보를 표시합니다. (구현 필요)`
-      );
-      // TODO: 미션 상세 화면으로 이동 또는 모달 표시
+      // 상세 화면으로 이동 (라우트 준비 필요)
+      router.push(`/(protected)/missions/${missionId}`);
     }
   };
 
   useEffect(() => {
     loadMissions(currentFilter);
-  }, [currentFilter]);
+  }, [currentFilter, loadMissions]);
 
   return (
-    <ScreenContainer padded={"horizontal"}>
+    <ScreenContainer scrollable padded="horizontal">
       <XStack p="$lg" jc="space-between" ai="center" pb="$md">
         <Text type="h2">미션 목록</Text>
       </XStack>

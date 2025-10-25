@@ -1,5 +1,10 @@
+// app/_layout.tsx
+
 /**
- * 루트 레이아웃
+ * 루트 레이아웃 컴포넌트
+ * - InAppUpdates (sp-react-native-in-app-updates) 완전 제거
+ * - Expo Go / 웹 / 네이티브 환경 모두 실행 가능
+ * - 스플래시 화면 제어 및 서비스 초기화
  */
 
 import initializeServices from "@/service/initialize";
@@ -10,73 +15,38 @@ import { Spinner, YStack } from "tamagui";
 import { useAppFonts } from "@/View/bootstrap/useFonts";
 import { useHydrationStatus } from "@/View/bootstrap/useHydrationStatus";
 import { GlobalLoadingSpinner } from "@/View/core/GlobalLoadingSpinner";
-import { AppProvider } from "@/View/store/AppProvider";
-import Constants from "expo-constants";
+import { AppProvider } from "./AppProvider";
+
 import * as SplashScreen from "expo-splash-screen";
 import {
   ReanimatedLogLevel,
   configureReanimatedLogger,
 } from "react-native-reanimated";
-import SpInAppUpdates, {
-  type IosStartUpdateOptions,
-} from "sp-react-native-in-app-updates";
 
-const inAppUpdates = new SpInAppUpdates(
-  true // isDebug
-);
+// 스플래시 화면 자동 숨김 방지
+SplashScreen.preventAutoHideAsync().catch(() => {});
 
-inAppUpdates.checkNeedsUpdate().then((result) => {
-  const isDifferentMinorVersion =
-    result.storeVersion.split(".")[1] !==
-    Constants.expoConfig?.version?.split(".")[1];
-
-  const isDifferentMajorVersion =
-    result.storeVersion.split(".")[0] !==
-    Constants.expoConfig?.version?.split(".")[0];
-
-  if (result.shouldUpdate) {
-    const updateOptions: IosStartUpdateOptions = {
-      forceUpgrade: isDifferentMajorVersion || isDifferentMinorVersion,
-      title: "New Version Available",
-      message: "Please update to the latest version",
-      buttonUpgradeText: "Update",
-      buttonCancelText: "Later",
-    };
-
-    inAppUpdates.startUpdate(updateOptions); // https://github.com/SudoPlz/sp-react-native-in-app-updates/blob/master/src/types.ts#L78
-  }
-});
-
-SplashScreen.preventAutoHideAsync();
-
+// Reanimated 로그 설정
 configureReanimatedLogger({
   level: ReanimatedLogLevel.warn,
-  strict: false, // Reanimated runs in strict mode by default
+  strict: false,
 });
 
-/**
- * 루트 레이아웃 컴포넌트
- */
 export default function RootLayout() {
   const [isServiceInitialized, setIsServiceInitialized] = useState(false);
 
-  // 폰트 로드 상태
-  const { isGlobalFontLoaded, hasGlobalFontLoadingError } = useAppFonts();
-  // 스토어 하이드레이션 상태
+  // 폰트 / 스토어 하이드레이션 상태
+  const { isGlobalFontLoaded } = useAppFonts();
   const isHydrated = useHydrationStatus();
 
-  /**
-   * 서비스 초기화
-   */
+  // ✅ 서비스 초기화
   useEffect(() => {
     const initialize = async () => {
       try {
-        // 서비스 초기화
-        await initializeServices();
-
+        await initializeServices(); // 내부적으로 API 등 초기화
         setIsServiceInitialized(true);
 
-        // 초기화 완료 후 스플래시 화면 숨기기
+        // 모든 준비 완료 후 스플래시 숨기기
         await SplashScreen.hideAsync();
       } catch (error) {
         console.error("Failed to initialize app:", error);
@@ -86,15 +56,17 @@ export default function RootLayout() {
     initialize();
   }, []);
 
+  // 로딩 상태일 때 스피너 표시
   const Render = useCallback(() => {
-    if (!isServiceInitialized && !isGlobalFontLoaded && !isHydrated) {
+    if (!isServiceInitialized || !isGlobalFontLoaded || !isHydrated) {
       return (
-        <YStack flex={1} justifyContent="center" alignItems="center">
+        <YStack f={1} jc="center" ai="center">
           <Spinner size="large" color="$blue10" />
         </YStack>
       );
     }
 
+    // 모든 준비 완료 → 라우트 렌더링
     return (
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="index" />
