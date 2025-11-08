@@ -1,3 +1,4 @@
+// 백엔드 응답 예시: { access_token: string, refresh_token: string }
 // service/api/auth.ts
 import { API } from "@/service/lib/Http/adapter";
 import type { User } from "./types";

@@ -5,7 +5,7 @@ import {
   createUserPet,
   activatePet,
 } from "@/service/api/pets";
-import type { PetMaster, UserPet } from "@/service/api/types";
+import type { PetMaster, BackendUserPet } from "@/service/api/types";
 
 /** 온보딩용 펫 마스터 목록 */
 export function usePetMasters(auto = true) {
@@ -14,7 +14,7 @@ export function usePetMasters(auto = true) {
 
 /** 활성 펫 조회 */
 export function useActivePet(auto = true) {
-  return useFetch<UserPet | null>(getActivePet, auto); // ✅
+  return useFetch<BackendUserPet | null>(getActivePet, auto); // ✅
 }
 
 /** 펫 생성 (온보딩 확정) */

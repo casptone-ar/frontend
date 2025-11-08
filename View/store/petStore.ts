@@ -1,6 +1,6 @@
 import { createStore } from "zustand";
 import { getActivePet, createUserPet, activatePet } from "@/service/api/pets";
-import type { UserPet } from "@/service/api/types";
+import type { UserPet } from "@/domain/pet/api-types";
 
 export type PetState = {
   activePet: UserPet | null;

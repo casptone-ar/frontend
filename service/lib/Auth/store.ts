@@ -1,13 +1,9 @@
-/**
- * Auth 서비스 스토어
- */
-
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { createStore, useStore } from "zustand";
 import { createJSONStorage, devtools, persist } from "zustand/middleware";
-
 import type { FirebaseAuthTypes } from "@react-native-firebase/auth";
 import { merge } from "es-toolkit";
+
 /**
  * Auth 상태 인터페이스
  */
@@ -27,14 +23,8 @@ export interface AuthStoreActions<T> {
   reset: () => void;
 }
 
-/**
- * Auth 스토어 인터페이스
- */
 export type AuthStoreI<T> = AuthStoreState<T> & AuthStoreActions<T>;
 
-/**
- * Auth 스토어 초기 상태
- */
 const initialState: AuthStoreState<null> = {
   user: null,
   token: null,
@@ -42,56 +32,34 @@ const initialState: AuthStoreState<null> = {
 };
 
 /**
- * Auth 스토어
+ * ✅ 정상 동작 버전
  */
-export const createAuthStore =
-  // @change 유저 타입 변경 필요
-  <T = FirebaseAuthTypes.User>() =>
-    createStore<AuthStoreI<T>>()(
-      devtools(
-        persist((get, set) => ({
+export const createAuthStore = <T = FirebaseAuthTypes.User>() =>
+  createStore<AuthStoreI<T>>()(
+    devtools(
+      persist(
+        (set, get) => ({
           user: null,
           token: null,
           isAuthenticated: false,
-          /**
-           * 사용자 정보 설정
-           */
-          setUser: (_user: T | null) => {
-            set({ user: _user });
-          },
 
-          /**
-           * 토큰 설정
-           */
-          setToken: (_token: string | null) => {
-            set({ token: _token });
-          },
-
-          /**
-           * 인증 상태 설정
-           */
+          setUser: (_user: T | null) => set({ user: _user }),
+          setToken: (_token: string | null) => set({ token: _token }),
           setIsAuthenticated: (_isAuthenticated: boolean) =>
             set({ isAuthenticated: _isAuthenticated }),
 
-          /**
-           * 스토어 초기화
-           */
-          reset: () => {
-            set({ ...initialState });
-          },
-        })),
+          reset: () => set({ ...initialState }),
+        }),
         {
           name: "auth-store",
           storage: createJSONStorage(() => AsyncStorage),
           merge: (persistedState, currentState) =>
-            merge(currentState, persistedState),
+            merge(currentState as any, persistedState as any) as any,
         }
       )
-    );
+    )
+  );
 
 export const AuthStore = createAuthStore();
 
-export const useAuthStore = () => {
-  const store = useStore(AuthStore);
-  return store;
-};
+export const useAuthStore = () => useStore(AuthStore);

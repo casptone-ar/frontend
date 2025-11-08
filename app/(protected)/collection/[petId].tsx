@@ -1,174 +1,110 @@
-import type { CollectedPet, MissionTimeline } from "@/domain/collection/types";
-import { useLocalSearchParams, useNavigation, useRouter } from "expo-router";
-import { useCallback, useEffect, useLayoutEffect, useState } from "react";
+// app/(protected)/collection/[petId].tsx
+import { useEffect, useMemo } from "react";
 import { Alert, ScrollView } from "react-native";
+import { useLocalSearchParams, useNavigation, useRouter } from "expo-router";
 import { Button, H3, Paragraph, Separator, Spinner, YStack } from "tamagui";
-import { MissionTimelineView } from "../components/collection/MissionTimelineView"; // 이전 파일명과 일치 확인
+import { useStore } from "zustand";
+
+import { collectionStore } from "@/View/store/collectionStore";
+import { MissionTimelineView } from "../components/collection/MissionTimelineView";
 import { PetDetailView } from "../components/collection/PetDetailView";
 
-// --- Mock Data & Service ---
-// MOCK_COLLECTED_PETS는 collection/index.tsx의 것을 참조한다고 가정
-const MOCK_COLLECTED_PETS_DETAIL_VIEW: CollectedPet[] = [
-  {
-    id: "collected_pet_001",
-    petId: "dog001_ascended_1",
-    name: "용감한 댕댕이",
-    description: "첫 번째로 승천한 전설의 댕댕이",
-    modelUrl: "models/legend_dog.glb",
-    thumbnailUrl: "thumbnails/legend_dog_thumb.png",
-    ascendedAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(),
-    finalLevel: 10,
-    missionTimelineId: "timeline_dog001_ascended_1",
-  },
-  {
-    id: "collected_pet_002",
-    petId: "cat001_ascended_1",
-    name: "지혜로운 냥이",
-    description: "많은 미션을 클리어하고 승천한 고양이",
-    modelUrl: "models/wise_cat.glb",
-    thumbnailUrl: "thumbnails/wise_cat_thumb.png",
-    ascendedAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
-    finalLevel: 10,
-    missionTimelineId: "timeline_cat001_ascended_1",
-  },
-];
+// ✅ 도메인(UI) 타입
+import type {
+  CollectedPet,
+  MissionTimeline,
+  TimelineEvent,
+} from "@/domain/collection/types";
 
-const MOCK_TIMELINES: Record<string, MissionTimeline> = {
-  timeline_dog001_ascended_1: {
-    id: "timeline_dog001_ascended_1",
-    petId: "dog001_ascended_1",
-    startDate: new Date(Date.now() - 20 * 24 * 60 * 60 * 1000).toISOString(),
-    endDate: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(),
-    events: [
-      {
-        id: "event1",
-        timestamp: new Date(
-          Date.now() - 19 * 24 * 60 * 60 * 1000
-        ).toISOString(),
-        type: "mission_completed",
-        title: "첫 걸음마 미션 완료!",
-        description: "500보 걷기 달성.",
-        details: { rewardCoin: 5 },
-      },
-      {
-        id: "event2",
-        timestamp: new Date(
-          Date.now() - 15 * 24 * 60 * 60 * 1000
-        ).toISOString(),
-        type: "level_up",
-        title: "레벨 2 달성!",
-        details: { achievedLevel: 2 },
-      },
-      {
-        id: "event3",
-        timestamp: new Date(
-          Date.now() - 10 * 24 * 60 * 60 * 1000
-        ).toISOString(),
-        type: "ascension",
-        title: "승천!",
-        description: "레벨 10에 도달하여 새로운 시작을 맞이합니다.",
-        details: { achievedLevel: 10 },
-      },
-    ],
-  },
-  timeline_cat001_ascended_1: {
-    id: "timeline_cat001_ascended_1",
-    petId: "cat001_ascended_1",
-    startDate: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString(),
-    endDate: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
-    events: [
-      // ... 냥이의 이벤트들
-    ],
-  },
-};
+// ✅ API 원본 타입
+import type { MissionTimelineEvent as ApiMissionTimelineEvent } from "@/service/api/types";
 
-const fetchCollectedPetDetail = async (
-  collectedPetId: string
-): Promise<CollectedPet | null> => {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      const pet = MOCK_COLLECTED_PETS_DETAIL_VIEW.find(
-        (p) => p.id === collectedPetId
-      );
-      resolve(pet || null);
-    }, 300);
-  });
-};
+/** selectedCollection → CollectedPet 매핑 */
+const mapSelectedToCollectedPet = (selected: {
+  id: number;
+  nickname: string;
+  ascendedAt: string;
+}): CollectedPet => ({
+  id: String(selected.id),
+  // ⚠ petId는 아직 백엔드에서 별도로 안 받아오니까
+  //   일단 collection id를 그대로 string으로 써줌 (나중에 pet_id 필드 생기면 교체)
+  petId: String(selected.id),
+  name: selected.nickname,
+  description: "승천한 애완동물의 기록입니다.",
+  ascendedAt: selected.ascendedAt,
+  finalLevel: 0, // 백엔드에서 최종 레벨 안 주면 0 또는 undefined로 처리
+  thumbnailUrl: "",
+});
 
-const fetchMissionTimeline = async (
-  timelineId: string
-): Promise<MissionTimeline | null> => {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve(MOCK_TIMELINES[timelineId] || null);
-    }, 400);
-  });
-};
-// --- End Mock Data & Service ---
+/** API MissionTimelineEvent → UI TimelineEvent 매핑 */
+const mapApiEventToTimelineEvent = (
+  e: ApiMissionTimelineEvent
+): TimelineEvent => ({
+  id: e.id,
+  timestamp: e.timestamp,
+  // ⚠ 여기서는 백엔드가 "mission_completed" | "level_up" | "item_acquired" | "ascension"
+  // 중 하나를 준다고 가정하고 타입 단언을 한다.
+  // 만약 실제 값이 다르면 union 타입을 string으로 바꾸거나 여기서 매핑 규칙을 정해야 함.
+  type: e.type as TimelineEvent["type"],
+  title: e.title,
+  description: e.description,
+  details: e.details,
+  // icon은 필요해지면 type에 따라 나중에 매핑
+});
 
-/**
- * 컬렉션에 등록된 특정 애완동물의 상세 정보를 보여주는 화면입니다.
- * 애완동물의 3D 모델(또는 이미지)과 함께 해당 애완동물과 관련된 미션 타임라인을 표시합니다.
- */
 export default function CollectedPetDetailScreen() {
   const router = useRouter();
   const navigation = useNavigation();
-  const { petId: collectedPetRouteId } = useLocalSearchParams<{
-    petId: string;
-  }>(); // 경로 파라미터 (CollectedPet의 id)
+  const { petId } = useLocalSearchParams<{ petId: string }>();
 
-  const [petDetail, setPetDetail] = useState<CollectedPet | null>(null);
-  const [timeline, setTimeline] = useState<MissionTimeline | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const { selectedCollection, isLoading, error, fetchCollectionDetail } =
+    useStore(collectionStore);
 
-  useLayoutEffect(() => {
-    if (petDetail) {
-      navigation.setOptions({ title: `${petDetail.name}의 기록` });
-    }
-  }, [navigation, petDetail]);
-
-  const loadData = useCallback(
-    async (id: string) => {
-      setIsLoading(true);
-      try {
-        // TODO: application/collection/... 훅 사용
-        const fetchedPetDetail = await fetchCollectedPetDetail(id);
-        setPetDetail(fetchedPetDetail);
-
-        if (fetchedPetDetail?.missionTimelineId) {
-          const fetchedTimeline = await fetchMissionTimeline(
-            fetchedPetDetail.missionTimelineId
-          );
-          setTimeline(fetchedTimeline);
-        } else if (fetchedPetDetail) {
-          console.warn(
-            `No mission timeline ID for pet: ${fetchedPetDetail.name}`
-          );
-        } else {
-          Alert.alert("오류", "애완동물 정보를 찾을 수 없습니다.");
-          router.back();
-          return;
-        }
-      } catch (error) {
-        console.error("Failed to load pet detail or timeline:", error);
-        Alert.alert("오류", "상세 정보를 불러오는 데 실패했습니다.");
-      } finally {
-        setIsLoading(false);
-      }
-    },
-    [router]
-  );
-
+  // 데이터 로딩
   useEffect(() => {
-    if (collectedPetRouteId) {
-      loadData(collectedPetRouteId);
-    } else {
+    if (!petId) {
       Alert.alert("오류", "잘못된 접근입니다.");
       router.back();
+      return;
     }
-  }, [collectedPetRouteId, loadData, router]);
 
-  if (isLoading) {
+    const id = Number(petId);
+    fetchCollectionDetail(id).catch((err) => {
+      console.error("컬렉션 상세 로드 실패:", err);
+      Alert.alert("오류", "컬렉션 상세를 불러오는 중 문제가 발생했습니다.");
+      router.back();
+    });
+  }, [petId, fetchCollectionDetail, router]);
+
+  // 헤더 제목 갱신
+  useEffect(() => {
+    if (selectedCollection?.nickname) {
+      navigation.setOptions({
+        title: `${selectedCollection.nickname}의 성장 일지`,
+      } as any);
+    }
+  }, [navigation, selectedCollection?.nickname]);
+
+  // ✅ UI용 pet / timeline 미리 계산
+  const uiPet: CollectedPet | undefined = useMemo(() => {
+    if (!selectedCollection) return undefined;
+    return mapSelectedToCollectedPet(selectedCollection);
+  }, [selectedCollection]);
+
+  const uiTimeline: MissionTimeline | undefined = useMemo(() => {
+    if (!selectedCollection) return undefined;
+    const events: TimelineEvent[] = selectedCollection.timeline.map(
+      mapApiEventToTimelineEvent
+    );
+    return {
+      id: String(selectedCollection.id),
+      petId: uiPet?.petId ?? String(selectedCollection.id),
+      events,
+      // startDate, endDate 는 백엔드에서 아직 안 받으니까 생략
+    };
+  }, [selectedCollection, uiPet]);
+
+  if (isLoading && !selectedCollection) {
     return (
       <YStack f={1} jc="center" ai="center" space="$2">
         <Spinner />
@@ -177,11 +113,10 @@ export default function CollectedPetDetailScreen() {
     );
   }
 
-  if (!petDetail) {
-    // 로딩이 끝났는데 petDetail이 없으면 (오류로 인해)
+  if (error || !selectedCollection || !uiPet) {
     return (
-      <YStack f={1} jc="center" ai="center" space="$2" p="$4">
-        <Paragraph>애완동물 정보를 표시할 수 없습니다.</Paragraph>
+      <YStack f={1} jc="center" ai="center" space="$3" p="$4">
+        <Paragraph>{error || "상세 정보를 표시할 수 없습니다."}</Paragraph>
         <Button onPress={() => router.back()}>목록으로 돌아가기</Button>
       </YStack>
     );
@@ -190,17 +125,17 @@ export default function CollectedPetDetailScreen() {
   return (
     <ScrollView style={{ flex: 1 }}>
       <YStack f={1} space="$3" p="$3">
-        <PetDetailView pet={petDetail} />
+        {/* ✅ PetDetailView에는 CollectedPet 그대로 전달 */}
+        <PetDetailView pet={uiPet} />
+
         <Separator />
+
         <H3>성장 일지</H3>
-        {timeline && timeline.events.length > 0 ? (
-          <MissionTimelineView timeline={timeline} />
-        ) : timeline ? (
-          <Paragraph color="$color10">기록된 성장 일지가 없습니다.</Paragraph>
+
+        {uiTimeline && uiTimeline.events.length > 0 ? (
+          <MissionTimelineView timeline={uiTimeline} />
         ) : (
-          <Paragraph color="$color10">
-            타임라인 정보를 불러오는 중이거나 없습니다.
-          </Paragraph>
+          <Paragraph color="$color10">기록된 성장 일지가 없습니다.</Paragraph>
         )}
       </YStack>
     </ScrollView>

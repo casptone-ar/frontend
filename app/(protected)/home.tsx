@@ -1,7 +1,7 @@
 // app/(protected)/home.tsx
 import { useFocusEffect, useRouter } from "expo-router";
-import { useCallback, useEffect, useState } from "react"; // ✅ NEW: useEffect 추가
-import { Alert, Platform } from "react-native"; // ✅ NEW: Platform 추가
+import { useCallback, useEffect, useState } from "react";
+import { Alert, Platform } from "react-native";
 import { Paragraph, Spinner, XStack, YStack } from "tamagui";
 
 import { Button } from "@/View/core/Button/Button";
@@ -13,22 +13,18 @@ import { MissionPreviewList } from "./components/home/MissionPreviewList";
 import { PetInteractionArea } from "./components/home/PetInteractionArea";
 import { PetStatusBar } from "./components/home/PetStatusBar";
 
-// ✅ 도메인(UI) 타입
 import type { MissionPreview as UiMissionPreview } from "@/domain/mission/types";
 import type { CurrentPetStatus, PetStats } from "@/domain/pet/types";
 
-// ✅ API 호출
 import { getActivePet } from "@/service/api/pets";
 import { getMissions } from "@/service/api/missions";
-
-// ✅ 매퍼
 import {
   mapUserPetToCurrentPetStatus,
   mapUserPetToPetStats,
   mapApiMissionsToUi,
 } from "@/domain/mappers";
 
-// ✅ NEW: 헬스 스토어
+// ✅ 헬스 스토어 가져오기
 import { useHealth } from "@/View/store/healthStore";
 
 export default function HomeScreen() {
@@ -47,12 +43,13 @@ export default function HomeScreen() {
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingMissions, setIsLoadingMissions] = useState(true);
 
-  // ✅ NEW: 오늘 걸음수 상태
+  // ✅ 헬스 스토어에서 필요한 상태와 동기화 함수 가져오기
   const {
     todaySteps,
     isLoading: healthLoading,
     error: healthError,
     refreshToday,
+    syncSteps, // 🆕 추가: 서버로 걸음 수 전송
   } = useHealth();
 
   const loadHomeScreenData = useCallback(async () => {
@@ -60,11 +57,10 @@ export default function HomeScreen() {
     setIsLoadingMissions(true);
     try {
       const [apiUserPet, missionRes] = await Promise.all([
-        getActivePet(), // UserPet | null
-        getMissions("daily"), // { items: ApiMissionPreview[] }
+        getActivePet(),
+        getMissions("daily"),
       ]);
 
-      // ✅ 매핑
       setPetStatus(mapUserPetToCurrentPetStatus(apiUserPet));
       setPetStats(mapUserPetToPetStats(apiUserPet));
       setMissionPreviews(mapApiMissionsToUi(missionRes.items ?? []));
@@ -77,19 +73,30 @@ export default function HomeScreen() {
     }
   }, []);
 
+  // ✅ 화면 진입 시: 데이터 + 걸음 동기화 모두 실행
   useFocusEffect(
     useCallback(() => {
-      loadHomeScreenData();
-      // ✅ NEW: 화면 포커스 때 걸음수도 갱신
-      refreshToday();
+      (async () => {
+        await loadHomeScreenData();
+
+        // ✅ HealthKit에서 최신 걸음 읽기
+        await refreshToday();
+
+        // ✅ NEW: 서버로 증분 걸음 전송 (경험치 반영)
+        await syncSteps();
+      })();
+
       return () => {};
-    }, [loadHomeScreenData, refreshToday])
+    }, [loadHomeScreenData, refreshToday, syncSteps])
   );
 
-  // ✅ NEW: 첫 마운트 시에도 한 번 조회(옵션)
+  // ✅ 첫 마운트 시에도 1회 실행 (선택 사항)
   useEffect(() => {
-    refreshToday();
-  }, [refreshToday]);
+    (async () => {
+      await refreshToday();
+      await syncSteps(); // 🆕 추가
+    })();
+  }, [refreshToday, syncSteps]);
 
   const handlePetInteraction = () => {
     Alert.alert("야옹!", "애완동물이 당신을 바라봅니다.");
@@ -145,7 +152,7 @@ export default function HomeScreen() {
           isLoading={!petStatus && isLoading}
         />
 
-        {/* ✅ NEW: 오늘의 걸음수 카드 (iOS 우선 노출) */}
+        {/* ✅ 오늘의 걸음수 카드 */}
         {Platform.OS === "ios" && (
           <YStack gap="$xs" bg="$color3" p="$md" borderRadius="$md">
             <Text type="bodyLarge">오늘의 걸음수</Text>
@@ -164,7 +171,10 @@ export default function HomeScreen() {
               <Button
                 size="sm"
                 variant="ghost"
-                onPress={refreshToday}
+                onPress={async () => {
+                  await refreshToday();
+                  await syncSteps(); // ✅ 새로고침 시에도 서버 전송
+                }}
                 disabled={healthLoading}
               >
                 새로고침
