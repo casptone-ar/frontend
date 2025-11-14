@@ -1,70 +1,104 @@
-import { createStore } from "zustand";
-import {
-  getMissions,
-  updateMissionProgress,
-  completeMission,
-} from "@/service/api/missions";
-import type { MissionPreview } from "@/service/api/types";
+// View/store/missionStore.ts
+import { createStore } from "zustand/vanilla";
+import { getMissions, claimMissionReward } from "@/service/api/missions";
+import type { MissionTypeFilter, RawMission } from "@/service/api/missions";
 
-export type MissionState = {
-  missions: MissionPreview[];
+export type MissionFilter = MissionTypeFilter;
+
+export interface MissionStoreState {
+  missions: RawMission[];
   isLoading: boolean;
-  error?: string;
-};
+  error: string | null;
+  filter: MissionFilter;
 
-export type MissionActions = {
-  fetchMissions: (scope?: "daily" | "weekly" | "all") => Promise<void>;
-  updateProgress: (user_mission_id: number, progress: number) => Promise<void>;
-  completeMission: (user_mission_id: number) => Promise<void>;
-};
+  /** 미션 목록 로드 */
+  fetchMissions: (filter?: MissionFilter) => Promise<void>;
 
-export type MissionStore = MissionState & MissionActions;
+  /** 미션 보상 수령 */
+  claimReward: (userMissionId: number) => Promise<void>;
 
-const initialState: MissionState = {
+  /** 필터 변경 (UI 탭 전환용) */
+  setFilter: (filter: MissionFilter) => void;
+
+  /** 스토어 초기화 */
+  reset: () => void;
+}
+
+export const missionStore = createStore<MissionStoreState>((set, get) => ({
   missions: [],
   isLoading: false,
-};
+  error: null,
+  filter: "all",
 
-export const missionStore = createStore<MissionStore>((set, get) => ({
-  ...initialState,
+  async fetchMissions(filter) {
+    const nextFilter = filter ?? get().filter ?? "all";
 
-  fetchMissions: async (scope = "all") => {
-    set({ isLoading: true, error: undefined });
+    set({
+      isLoading: true,
+      error: null,
+      filter: nextFilter,
+    });
+
     try {
-      const res = await getMissions(scope);
-      set({ missions: res.items });
+      const res = await getMissions(nextFilter);
+      // 공통 응답: { success, data } 라고 가정
+      const missions = (res as any)?.data ?? [];
+
+      set({
+        missions,
+        isLoading: false,
+      });
     } catch (err: any) {
-      set({ error: err?.message ?? "미션 불러오기 실패" });
-    } finally {
-      set({ isLoading: false });
+      console.error("Failed to fetch missions:", err);
+      set({
+        isLoading: false,
+        error: err?.message ?? "미션을 불러오는 중 오류가 발생했습니다.",
+      });
     }
   },
 
-  updateProgress: async (user_mission_id, progress) => {
+  async claimReward(userMissionId) {
     try {
-      await updateMissionProgress(user_mission_id, progress);
-      set({
-        missions: get().missions.map((m) =>
-          m.user_mission_id === user_mission_id ? { ...m, progress } : m
-        ),
-      });
+      await claimMissionReward(userMissionId);
+
+      // 성공 시, 해당 미션의 reward_claimed 플래그만 true로 업데이트 (있으면)
+      set((state) => ({
+        ...state,
+        missions: state.missions.map((mission: any) => {
+          const id =
+            mission?.user_mission_id ??
+            mission?.id ??
+            mission?.missionId ??
+            null;
+
+          if (id === userMissionId) {
+            return {
+              ...mission,
+              reward_claimed: true,
+            };
+          }
+          return mission;
+        }),
+      }));
     } catch (err: any) {
-      console.error("updateProgress error", err);
+      console.error("Failed to claim mission reward:", err);
+      set((state) => ({
+        ...state,
+        error: err?.message ?? "보상 수령 중 오류가 발생했습니다.",
+      }));
     }
   },
 
-  completeMission: async (user_mission_id) => {
-    try {
-      await completeMission(user_mission_id);
-      set({
-        missions: get().missions.map((m) =>
-          m.user_mission_id === user_mission_id
-            ? { ...m, is_completed: true }
-            : m
-        ),
-      });
-    } catch (err: any) {
-      console.error("completeMission error", err);
-    }
+  setFilter(filter) {
+    set({ filter });
+  },
+
+  reset() {
+    set({
+      missions: [],
+      isLoading: false,
+      error: null,
+      filter: "all",
+    });
   },
 }));

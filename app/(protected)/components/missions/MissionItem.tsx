@@ -45,7 +45,7 @@ export const MissionItem = ({ mission, onPress }: MissionItemProps) => {
           key={reward.type}
           gap="$xxs"
           ai="center"
-          br="$pill"
+          br="$lg"
           bg="$background3"
           px="$sm"
           py="$xxs"
@@ -169,7 +169,7 @@ export const MissionItem = ({ mission, onPress }: MissionItemProps) => {
               ai="center"
               gap="$xs"
               p="$xs"
-              br="$round"
+              br="$xl"
               bg="$accentPositive2"
             >
               <CheckCircle size={16} color="$accentPositive1" />
