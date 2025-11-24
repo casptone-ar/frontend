@@ -76,7 +76,7 @@ export default function ShopScreen() {
             <YStack
               key={item.id ?? idx}
               p="$md"
-              bg="$backgroundSoft"
+              bg="$background1"
               br="$4"
               space="$2"
               mb="$3"
