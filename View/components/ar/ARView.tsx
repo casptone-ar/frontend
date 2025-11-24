@@ -1,32 +1,31 @@
-import type { PetAnimationType } from "@/domain/pet/types";
-import { Button, Paragraph, YStack } from "tamagui";
+// View/components/ar/ARView.tsx
 
-// 실제 AR 라이브러리(예: react-native-vision-camera + three.js, ViroReact, expo-gl + three.js 등) 임포트 필요
-// import { SomeARViewLibrary } from 'some-ar-library';
+import { useEffect, useState } from "react";
+import {
+  Image,
+  Pressable,
+  StyleSheet,
+  type GestureResponderEvent,
+  type LayoutChangeEvent,
+} from "react-native";
+import { CameraView, useCameraPermissions } from "expo-camera";
+import { Paragraph, YStack } from "tamagui";
+import type { PetAnimationType } from "@/domain/pet/types";
 
 type ARViewProps = {
-  petModelUrl: string; // 렌더링할 애완동물 3D 모델 파일의 경로 또는 URL.
-  currentAnimation: PetAnimationType; // 현재 재생 중인 애니메이션 이름 (외부에서 제어).
-  scale?: number; // AR 공간에서의 애완동물 크기
-  onPetAnchorFound?: () => void; // 애완동물을 배치할 적절한 AR 앵커(평면 등)를 찾았을 때 호출.
-  onPetPlaced?: () => void; // 애완동물이 AR 공간에 성공적으로 배치되었을 때 호출.
-  onPetTapped?: () => void; // AR 뷰에서 애완동물이 터치되었을 때 호출.
-  onError?: (error: Error) => void; // AR 관련 오류 발생 시 호출
+  petModelUrl: string;
+  currentAnimation: PetAnimationType;
+  scale?: number; // 🔹 선택적
+  onPetAnchorFound?: () => void;
+  onPetPlaced?: () => void;
+  onPetTapped?: () => void;
+  onError?: (error: Error) => void;
 };
 
-/**
- * AR 카메라 화면에 3D 애완동물 모델을 렌더링하고 관리하는 컴포넌트입니다.
- * 네이티브 AR 기능을 사용하여 현실 공간에 애완동물을 표시합니다.
- * 실제 구현은 선택한 AR 라이브러리(ARKit/ARCore 또는 추상화 라이브러리)에 따라 크게 달라집니다.
- *
- * @remarks
- * 이 컴포넌트는 현재 실제 AR 렌더링 로직 없이 UI 구조만 정의합니다.
- * 실제 AR 기능 구현 시, props를 통해 모델, 애니메이션 등을 제어하고
- * AR 이벤트(앵커 감지, 모델 배치, 터치 등)를 부모로 전달해야 합니다.
- *
- * @param {ARViewProps} props - 컴포넌트 props
- * @returns {JSX.Element}
- */
+type Pos = { x: number; y: number };
+
+const PET_SIZE = 160; // 펫 스프라이트 크기(px)
+
 export const ARView = ({
   petModelUrl,
   currentAnimation,
@@ -34,79 +33,139 @@ export const ARView = ({
   onPetAnchorFound,
   onPetPlaced,
   onPetTapped,
-  onError,
 }: ARViewProps) => {
-  // --- 실제 AR 라이브러리 연동 로직 ---
-  // useEffect(() => {
-  //   // AR 세션 초기화, 모델 로드, 애니메이션 설정 등
-  //   // 예: SomeARViewLibrary.loadModel(petModelUrl);
-  //   //     SomeARViewLibrary.setAnimation(currentAnimation);
-  //   //     SomeARViewLibrary.setScale(scale);
+  // 🔹 1. 모든 Hook은 여기 위쪽에 몰아놓기
+  const [permission, requestPermission] = useCameraPermissions();
+  const [facing] = useState<"front" | "back">("back");
 
-  //   // 이벤트 리스너 설정
-  //   // const anchorListener = SomeARViewLibrary.on('anchorFound', onPetAnchorFound);
-  //   // const placedListener = SomeARViewLibrary.on('modelPlaced', onPetPlaced);
-  //   // const tapListener = SomeARViewLibrary.on('modelTapped', onPetTapped);
-  //   // const errorListener = SomeARViewLibrary.on('error', onError);
+  const [containerSize, setContainerSize] = useState<{
+    width: number;
+    height: number;
+  }>({ width: 0, height: 0 });
 
-  //   // return () => {
-  //   //   // AR 세션 정리, 리스너 제거
-  //   //   anchorListener.remove();
-  //   //   placedListener.remove();
-  //   //   tapListener.remove();
-  //   //   errorListener.remove();
-  //   //   SomeARViewLibrary.dispose();
-  //   // };
-  // }, [petModelUrl, onPetAnchorFound, onPetPlaced, onPetTapped, onError, scale]);
+  const [petPos, setPetPos] = useState<Pos | null>(null);
 
-  // useEffect(() => {
-  //   // 애니메이션 변경 시 AR 라이브러리에 반영
-  //   // SomeARViewLibrary.setAnimation(currentAnimation);
-  // }, [currentAnimation]);
-  // --- END 실제 AR 라이브러리 연동 로직 ---
+  // 🔹 2. 권한 여부와 상관없이 항상 호출되는 useEffect
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      onPetAnchorFound?.();
+      onPetPlaced?.();
+    }, 800);
+    return () => clearTimeout(timer);
+  }, [onPetAnchorFound, onPetPlaced]);
 
-  // 현재는 플레이스홀더 UI를 반환합니다.
-  // 실제 AR 라이브러리의 View 컴포넌트가 여기에 위치하게 됩니다.
-  return (
-    <YStack f={1} bc="$backgroundStrong" jc="center" ai="center" elevation="$1">
-      {/* <SomeARViewLibrary.View style={{ flex: 1, width: '100%' }} /> */}
-      <Paragraph ta="center" p="$4" color="$color10">
-        AR 카메라 뷰 영역입니다.
-        {"\n"}
-        모델: {petModelUrl}
-        {"\n"}
-        애니메이션: {currentAnimation}
-        {"\n"}
-        크기: {scale}
-        {"\n"}
-        (실제 AR 라이브러리 연동 필요)
-      </Paragraph>
-      {/* 개발/디버깅용 임시 버튼 */}
-      <YStack position="absolute" bottom="$4" left="$4" space>
-        {onPetAnchorFound && (
-          <Button size="$2" onPress={onPetAnchorFound}>
-            (임시) 앵커 찾음
-          </Button>
-        )}
-        {onPetPlaced && (
-          <Button size="$2" onPress={onPetPlaced}>
-            (임시) 펫 배치됨
-          </Button>
-        )}
-        {onPetTapped && (
-          <Button size="$2" onPress={onPetTapped}>
-            (임시) 펫 터치
-          </Button>
-        )}
-        {onError && (
-          <Button
-            size="$2"
-            onPress={() => onError(new Error("임의 AR 오류 발생"))}
-          >
-            (임시) 오류 발생
-          </Button>
-        )}
+  // 🔹 레이아웃 사이즈 저장
+  const handleLayout = (e: LayoutChangeEvent) => {
+    const { width, height } = e.nativeEvent.layout;
+    setContainerSize({ width, height });
+
+    // 처음 한 번은 화면 아래쪽 가운데에 펫 위치시킴
+    if (!petPos && width > 0 && height > 0) {
+      setPetPos({
+        x: width / 2,
+        y: height * 0.6,
+      });
+    }
+  };
+
+  // 🔹 화면 탭 → 펫 위치 옮기고, onPetTapped 호출
+  const handlePress = (e: GestureResponderEvent) => {
+    const { locationX, locationY } = e.nativeEvent;
+    setPetPos({ x: locationX, y: locationY });
+    onPetTapped?.();
+  };
+
+  // 🔹 권한 로딩 중
+  if (!permission) {
+    return (
+      <YStack f={1} jc="center" ai="center">
+        <Paragraph>카메라 권한 상태를 확인하는 중...</Paragraph>
       </YStack>
-    </YStack>
+    );
+  }
+
+  // 🔹 권한 아직 없음
+  if (!permission.granted) {
+    return (
+      <YStack f={1} jc="center" ai="center" p="$4" space="$3">
+        <Paragraph>카메라 권한이 필요합니다.</Paragraph>
+        <Paragraph color="$color10">
+          계속하려면 카메라 접근을 허용해 주세요.
+        </Paragraph>
+        <Pressable
+          onPress={requestPermission}
+          style={{
+            marginTop: 16,
+            paddingHorizontal: 16,
+            paddingVertical: 8,
+            borderRadius: 8,
+            backgroundColor: "black",
+          }}
+        >
+          <Paragraph color="white">권한 요청하기</Paragraph>
+        </Pressable>
+      </YStack>
+    );
+  }
+
+  // 🔹 펫 위치 계산 (값 없으면 중앙 근처에 기본값)
+  const effectivePos: Pos | null =
+    petPos && containerSize.width && containerSize.height
+      ? petPos
+      : containerSize.width && containerSize.height
+      ? { x: containerSize.width / 2, y: containerSize.height * 0.6 }
+      : null;
+
+  return (
+    <Pressable
+      style={styles.container}
+      onPress={handlePress}
+      onLayout={handleLayout}
+    >
+      {/* 🔹 실제 카메라 프리뷰 */}
+      <CameraView style={styles.camera} facing={facing} />
+
+      {/* 🔹 카메라 위 펫 이미지 (투명 PNG 사용 가능) */}
+      {effectivePos && (
+        <Image
+          // TODO: 이 부분을 나중에 네 프로젝트 에셋 경로로 교체하면 됨
+          // 예: source={require("@/assets/pets/dog_idle.png")}
+          source={{
+            uri: "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6e/Golde33443.jpg/320px-Golde33443.jpg",
+          }}
+          style={{
+            position: "absolute",
+            width: PET_SIZE * scale,
+            height: PET_SIZE * scale,
+            left: effectivePos.x - (PET_SIZE * scale) / 2,
+            top: effectivePos.y - (PET_SIZE * scale) / 2,
+          }}
+          resizeMode="contain"
+        />
+      )}
+
+      {/* 🔹 카메라 위 오버레이 mock UI */}
+      <YStack
+        position="absolute"
+        bottom={0}
+        left={0}
+        right={0}
+        p="$4"
+        ai="center"
+        bg="rgba(0,0,0,0.35)"
+      >
+        <Paragraph color="white">모델: {petModelUrl}</Paragraph>
+        <Paragraph color="white">애니메이션: {currentAnimation}</Paragraph>
+        <Paragraph color="white">스케일: {scale}</Paragraph>
+        <Paragraph mt="$2" color="white">
+          화면을 탭하면 펫이 해당 위치로 이동하고 반응합니다 (mock)
+        </Paragraph>
+      </YStack>
+    </Pressable>
   );
 };
+
+const styles = StyleSheet.create({
+  container: { flex: 1 },
+  camera: { flex: 1 },
+});
