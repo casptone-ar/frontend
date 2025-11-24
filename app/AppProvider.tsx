@@ -3,6 +3,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useRouter } from "expo-router";
 import { useStore } from "zustand";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 import { authStore } from "@/View/store/authStore";
 import { petStore } from "@/View/store/petStore";
@@ -14,10 +15,20 @@ import { API } from "@/service/lib/Http/adapter";
 
 type AppProviderProps = {
   children: React.ReactNode;
-  appReady?: boolean; // 👈 추가
+  appReady?: boolean;
 };
 
-export function AppProvider({ children, appReady }: AppProviderProps) {
+// ✅ 전역 QueryClient 인스턴스 (앱 전체에서 하나만 사용)
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 0,
+      refetchOnWindowFocus: false,
+    },
+  },
+});
+
+export function AppProvider({ children }: AppProviderProps) {
   const router = useRouter();
 
   // auth
@@ -70,11 +81,11 @@ export function AppProvider({ children, appReady }: AppProviderProps) {
     return "/(protected)/home";
   }, [bootstrapped, accessToken, user, activePet]);
 
-  // 4) 준비 중이면 로딩 화면
+  // 4) 준비 중이면 로딩 상태
   const stillLoading =
     !bootstrapped || authLoading || (user ? petLoading && !activePet : false);
 
-  // 5) 준비되면 네비게이션 (한 tick 뒤에)
+  // 5) 준비되면 네비게이션
   useEffect(() => {
     if (!stillLoading && targetRoute) {
       const id = setTimeout(() => {
@@ -84,21 +95,22 @@ export function AppProvider({ children, appReady }: AppProviderProps) {
     }
   }, [stillLoading, targetRoute, router]);
 
-  if (stillLoading) {
-    return (
-      <ScreenContainer padded scrollable>
-        <YStack f={1} jc="center" ai="center" space="$2">
-          <Text type="h3">준비 중…</Text>
-          <Text type="bodySmall" colorVariant="secondary">
-            계정을 확인하고 초기 데이터를 불러오고 있어요.
-          </Text>
-        </YStack>
-      </ScreenContainer>
-    );
-  }
-
-  return <>{children}</>;
+  return (
+    <QueryClientProvider client={queryClient}>
+      {stillLoading ? (
+        <ScreenContainer padded scrollable>
+          <YStack f={1} jc="center" ai="center" space="$2">
+            <Text type="h3">준비 중…</Text>
+            <Text type="bodySmall" colorVariant="secondary">
+              계정을 확인하고 초기 데이터를 불러오고 있어요.
+            </Text>
+          </YStack>
+        </ScreenContainer>
+      ) : (
+        <>{children}</>
+      )}
+    </QueryClientProvider>
+  );
 }
 
-// ✅ default export 그대로 유지
 export default AppProvider;
