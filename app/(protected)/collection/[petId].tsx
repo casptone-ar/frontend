@@ -6,8 +6,8 @@ import { Button, H3, Paragraph, Separator, Spinner, YStack } from "tamagui";
 import { useStore } from "zustand";
 
 import { collectionStore } from "@/View/store/collectionStore";
-import { MissionTimelineView } from "../components/collection/MissionTimelineView";
-import { PetDetailView } from "../components/collection/PetDetailView";
+import { MissionTimelineView } from "@/View/components/collection/MissionTimelineView";
+import { PetDetailView } from "@/View/components/collection/PetDetailView";
 
 // ✅ 도메인(UI) 타입
 import type {

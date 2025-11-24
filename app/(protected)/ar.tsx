@@ -3,8 +3,8 @@ import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import { Alert } from "react-native";
 import { Button, Paragraph, Spinner, YStack } from "tamagui";
-import { ARTouchControls } from "./components/ar/ARTouchControls";
-import { ARView } from "./components/ar/ARView";
+import { ARTouchControls } from "@/View/components/ar/ARTouchControls";
+import { ARView } from "@/View/components/ar/ARView";
 
 // --- Mock Data & Service ---
 // 실제로는 service/application 레이어에서 현재 활성화된 애완동물 정보를 가져옵니다.
@@ -17,7 +17,7 @@ const MOCK_ACTIVE_PET: Pet | null = {
   thumbnailUrl: "images/dog_chef_thumb.png",
   level: 5,
   experience: 350,
-  currentStats: { health: 80, happiness: 90 },
+  currentStats: { health: 80, happiness: 90, experience: 350, level: 5 },
   createdAt: new Date().toISOString(),
   updatedAt: new Date().toISOString(),
   arData: {

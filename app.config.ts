@@ -96,12 +96,6 @@ const EXPO_ASSETS_PLUGIN: Plugin = [
   },
 ];
 
-const FIREBASE_APP_PLUGIN: Plugin = ["@react-native-firebase/app"];
-const FIREBASE_AUTH_PLUGIN: Plugin = ["@react-native-firebase/auth"];
-const FIREBASE_CRASHLYTICS_PLUGIN: Plugin = [
-  "@react-native-firebase/crashlytics",
-];
-
 const BUILD_PROPERTIES_PLUGIN: Plugin = [
   "expo-build-properties",
   {
@@ -200,9 +194,6 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       DEV_CLIENT_PLUGIN,
       EXPO_CAMERA_PLUGIN,
       EXPO_ASSETS_PLUGIN,
-      FIREBASE_APP_PLUGIN,
-      FIREBASE_AUTH_PLUGIN,
-      FIREBASE_CRASHLYTICS_PLUGIN,
       BUILD_PROPERTIES_PLUGIN,
       EXPO_MEDIA_LIBRARY_PLUGIN,
       EXPO_IMAGE_PICKER_PLUGIN,

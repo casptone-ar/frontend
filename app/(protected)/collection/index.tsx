@@ -1,68 +1,57 @@
 // app/(protected)/collection/index.tsx
 
-import { useEffect, useMemo } from "react";
-import { Alert } from "react-native";
+import { useState } from "react";
 import { useRouter } from "expo-router";
-import { H2, Paragraph, Separator, Spinner, YStack } from "tamagui";
-import { useStore } from "zustand";
+import { H2, Paragraph, Separator, YStack } from "tamagui";
 
 import type { CollectedPet } from "@/domain/collection/types";
-import type { UserCollection } from "@/service/api/types";
-import { collectionStore } from "@/View/store/collectionStore";
-import { CollectedPetGrid } from "../components/collection/CollectedPetGrid";
+import { CollectedPetGrid } from "@/View/components/collection/CollectedPetGrid";
 
-// UserCollection → CollectedPet 매핑 함수
-const mapToCollectedPet = (c: UserCollection): CollectedPet => ({
-  id: String(c.user_collection_id),
-  petId: String(c.pet_master_id), // ⚠ 실제 pet_id 필드가 생기면 거기로 교체
-  name: c.ascended_nickname,
-  description: "", // 백엔드에서 아직 설명 안 주면 일단 빈 문자열
-  ascendedAt: c.ascended_at,
-  finalLevel: 0, // 백엔드에서 레벨 안 주면 0으로 두거나, 나중에 필드 추가되면 교체
-  // modelUrl, thumbnailUrl, missionTimelineId 등은 나중에 필요해지면 채우기
-});
+// 🔹 컬렉션 목 데이터 (3개 정도 예시)
+const MOCK_COLLECTED_PETS: CollectedPet[] = [
+  {
+    id: "collected_pet_001",
+    petId: "dog001_ascended_1",
+    name: "용감한 댕댕이",
+    description: "첫 번째로 승천한 전설의 댕댕이",
+    modelUrl: "models/legend_dog.glb",
+    thumbnailUrl: "thumbnails/legend_dog_thumb.png",
+    ascendedAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(),
+    finalLevel: 10,
+    missionTimelineId: "timeline_dog001_ascended_1",
+  },
+  {
+    id: "collected_pet_002",
+    petId: "cat001_ascended_1",
+    name: "지혜로운 냥이",
+    description: "많은 미션을 클리어하고 승천한 고양이",
+    modelUrl: "models/wise_cat.glb",
+    thumbnailUrl: "thumbnails/wise_cat_thumb.png",
+    ascendedAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
+    finalLevel: 10,
+    missionTimelineId: "timeline_cat001_ascended_1",
+  },
+  {
+    id: "collected_pet_003",
+    petId: "rabbit001_ascended_1",
+    name: "점프하는 토끼",
+    description: "언덕을 뛰어다니며 성장한 토끼",
+    modelUrl: "models/jump_rabbit.glb",
+    thumbnailUrl: "thumbnails/jump_rabbit_thumb.png",
+    ascendedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+    finalLevel: 7,
+    missionTimelineId: "timeline_rabbit001_ascended_1",
+  },
+];
 
 export default function CollectionScreen() {
   const router = useRouter();
-  const { collections, isLoading, error, fetchCollections } =
-    useStore(collectionStore);
-
-  // 첫 진입 시 컬렉션 목록 불러오기
-  useEffect(() => {
-    fetchCollections().catch((err) => {
-      console.error("컬렉션 로드 실패:", err);
-      Alert.alert("오류", "컬렉션 정보를 불러오는 중 문제가 발생했습니다.");
-    });
-  }, [fetchCollections]);
-
-  // API 원본(UserCollection[]) → UI용(CollectedPet[]) 변환
-  const collectedPets: CollectedPet[] = useMemo(
-    () => collections.map(mapToCollectedPet),
-    [collections]
-  );
+  // 🔹 지금은 그냥 고정 목 데이터 사용
+  const [collectedPets] = useState<CollectedPet[]>(MOCK_COLLECTED_PETS);
 
   const handleSelectPet = (pet: CollectedPet) => {
-    // [petId].tsx 라우트로 이동
     router.push(`/collection/${pet.id}`);
   };
-
-  if (isLoading && collections.length === 0) {
-    return (
-      <YStack f={1} jc="center" ai="center" space="$2">
-        <Spinner />
-        <Paragraph>컬렉션 로딩 중...</Paragraph>
-      </YStack>
-    );
-  }
-
-  if (error && collections.length === 0) {
-    return (
-      <YStack f={1} jc="center" ai="center" space="$3" p="$4">
-        <Paragraph color="$red10">오류: {error}</Paragraph>
-        <Paragraph color="$color11">잠시 후 다시 시도해 주세요.</Paragraph>
-      </YStack>
-    );
-  }
 
   return (
     <YStack f={1} pt="$2">

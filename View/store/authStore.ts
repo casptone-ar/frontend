@@ -2,12 +2,14 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { create } from "zustand";
 import * as SecureStore from "expo-secure-store";
-import {
-  signIn,
-  signUp,
-  refreshToken as apiRefreshToken,
-  getMe,
-} from "@/service/api/auth";
+
+// 🔹 실제 API 연동은 잠깐 비활성화 (백엔드 붙일 때 다시 사용)
+// import {
+//   signIn,
+//   signUp,
+//   refreshToken as apiRefreshToken,
+//   getMe,
+// } from "@/service/api/auth";
 import type { User } from "@/service/api/types";
 
 type AuthState = {
@@ -37,49 +39,15 @@ export const authStore = create<AuthState>((set, get) => ({
   error: null,
 
   /**
-   * 앱 부팅: 토큰 복구 → /me 조회 (만료면 refresh 시도)
-   * - 요청 인터셉터 호환을 위해 accessToken을 AsyncStorage("token")에도 동기화
+   * 👟 부팅 시 동작 (목 버전)
+   * - 지금은 저장된 토큰/유저 없이 항상 "로그아웃 상태"에서 시작
+   * - 나중에 실제 토큰 복구 로직이 필요하면, 아래에 원래 bootstrap 구현 다시 넣으면 됨.
    */
   bootstrap: async () => {
     set({ isLoading: true, error: null });
     try {
-      const storedAccess = await SecureStore.getItemAsync("accessToken");
-      const storedRefresh = await SecureStore.getItemAsync("refreshToken");
-
-      if (storedAccess) {
-        await AsyncStorage.setItem("token", storedAccess);
-        set({ accessToken: storedAccess, refreshToken: storedRefresh ?? null });
-
-        try {
-          const me = await getMe();
-          set({ user: me });
-        } catch {
-          // access 만료 → refresh 시도
-          if (storedRefresh) {
-            const ok = await get().refresh();
-            if (ok) {
-              const me = await getMe();
-              set({ user: me });
-            }
-          }
-        }
-        return;
-      }
-
-      // 레거시 호환: 예전에 AsyncStorage("token")만 쓰던 토큰 복구
-      const legacy = await AsyncStorage.getItem("token");
-      if (legacy) {
-        await SecureStore.setItemAsync("accessToken", legacy);
-        set({ accessToken: legacy, refreshToken: null });
-        try {
-          const me = await getMe();
-          set({ user: me });
-        } catch {
-          await AsyncStorage.removeItem("token");
-          await SecureStore.deleteItemAsync("accessToken");
-          set({ accessToken: null });
-        }
-      }
+      // 목 모드에서는 별거 안 하고 바로 끝
+      set({ user: null, accessToken: null, refreshToken: null });
     } catch (e: any) {
       set({ error: e?.message ?? "초기화 실패" });
     } finally {
@@ -88,21 +56,28 @@ export const authStore = create<AuthState>((set, get) => ({
   },
 
   /**
-   * 로그인: 토큰 저장(SecureStore + AsyncStorage("token")) 후 상태 세팅
+   * 👤 로그인 (목 버전)
+   * - 백엔드 호출 없이, 입력한 email 기반으로 가짜 유저/토큰 세팅
+   * - Http 어댑터에서 쓰는 AsyncStorage("token")도 같이 저장
    */
-  login: async (email, password) => {
+  login: async (email, _password) => {
     set({ isLoading: true, error: null });
     try {
-      const res = await signIn(email, password); // { accessToken, refreshToken, user }
+      const fakeAccessToken = "dev-access-token";
+      const fakeUser = {
+        id: "dev-user",
+        email,
+        // User 타입 필드가 정확히 뭔지 몰라서 최소 필드만 넣고 캐스팅
+        nickname: email.split("@")[0] ?? "User",
+      } as unknown as User;
 
-      await SecureStore.setItemAsync("accessToken", res.accessToken);
-      await SecureStore.setItemAsync("refreshToken", res.refreshToken);
-      await AsyncStorage.setItem("token", res.accessToken);
+      await SecureStore.setItemAsync("accessToken", fakeAccessToken);
+      await AsyncStorage.setItem("token", fakeAccessToken);
 
       set({
-        user: res.user,
-        accessToken: res.accessToken,
-        refreshToken: res.refreshToken,
+        user: fakeUser,
+        accessToken: fakeAccessToken,
+        refreshToken: null,
         isLoading: false,
       });
       return true;
@@ -113,31 +88,28 @@ export const authStore = create<AuthState>((set, get) => ({
   },
 
   /**
-   * 회원가입: 백엔드 정책(토큰 有/無) 모두 처리
-   * - signUp 응답은 { user } 또는 { user, accessToken, refreshToken } 둘 중 하나라고 가정
+   * 📝 회원가입 (목 버전)
+   * - 실제 서버에 유저를 만들지 않고, 바로 로그인된 상태로 전환
    */
-  register: async (email, password, nickname) => {
+  register: async (email, _password, nickname) => {
     set({ isLoading: true, error: null });
     try {
-      const res = await signUp(email, password, nickname); // SignUpRes
+      const fakeAccessToken = "dev-access-token";
+      const fakeUser = {
+        id: "dev-user",
+        email,
+        nickname,
+      } as unknown as User;
 
-      // 토큰을 함께 주는 경우 → 즉시 로그인 상태
-      if ("accessToken" in res && "refreshToken" in res) {
-        await SecureStore.setItemAsync("accessToken", res.accessToken);
-        await SecureStore.setItemAsync("refreshToken", res.refreshToken);
-        await AsyncStorage.setItem("token", res.accessToken);
+      await SecureStore.setItemAsync("accessToken", fakeAccessToken);
+      await AsyncStorage.setItem("token", fakeAccessToken);
 
-        set({
-          user: res.user,
-          accessToken: res.accessToken,
-          refreshToken: res.refreshToken,
-          isLoading: false,
-        });
-        return true;
-      }
-
-      // 토큰이 없는 경우 → user만 세팅(화면에서 로그인/온보딩으로 분기)
-      set({ user: res.user, isLoading: false });
+      set({
+        user: fakeUser,
+        accessToken: fakeAccessToken,
+        refreshToken: null,
+        isLoading: false,
+      });
       return true;
     } catch (e: any) {
       set({ error: e?.message ?? "회원가입 실패", isLoading: false });
@@ -146,7 +118,7 @@ export const authStore = create<AuthState>((set, get) => ({
   },
 
   /**
-   * 로그아웃: 저장소 정리 후 상태 초기화
+   * 🚪 로그아웃: 저장소 정리 후 상태 초기화
    */
   logout: async () => {
     await SecureStore.deleteItemAsync("accessToken");
@@ -156,21 +128,12 @@ export const authStore = create<AuthState>((set, get) => ({
   },
 
   /**
-   * 토큰 리프레시: 새 accessToken 저장 + 상태 갱신
+   * 🔄 토큰 리프레시 (목 버전)
+   * - 목 모드에서는 따로 갱신할 토큰이 없으므로 항상 true만 반환
+   * - 나중에 실제 refresh 붙일 때 이 부분 교체
    */
   refresh: async () => {
-    try {
-      const rt = get().refreshToken;
-      if (!rt) return false;
-
-      const res = await apiRefreshToken(rt); // { accessToken }
-      await SecureStore.setItemAsync("accessToken", res.accessToken);
-      await AsyncStorage.setItem("token", res.accessToken);
-      set({ accessToken: res.accessToken });
-      return true;
-    } catch {
-      await get().logout();
-      return false;
-    }
+    // mock 환경에서는 별도 동작 없음
+    return true;
   },
 }));

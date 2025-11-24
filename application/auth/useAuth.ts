@@ -1,33 +1,16 @@
+// application/auth/useAuth.ts
+
 import { useAuthStore } from "@/service/lib/Auth/store";
-import { getAuth, signInAnonymously } from "@react-native-firebase/auth";
 import { useEffect, useState } from "react";
 import { signIn } from "@/service/api/auth";
 
 /**
  * 인증 관리 훅
+ * (현재는 자동 로그인 비활성화 상태)
  */
 export const useAutoSignIn = () => {
-  const AuthStore = useAuthStore();
-
-  useEffect(() => {
-    const signIn = async () => {
-      console.log("signIn");
-      const auth = getAuth();
-      const signInResult = await signInAnonymously(auth);
-
-      if (!signInResult.user) {
-        console.log("signInResult.user is null");
-        return;
-      }
-
-      AuthStore.setUser(signInResult.user);
-      AuthStore.setIsAuthenticated(true);
-    };
-
-    if (process.env.EXPO_PUBLIC_USE_AUTH) {
-      signIn();
-    }
-  }, []);
+  // Firebase 익명 로그인은 Expo Go에서 사용할 수 없으므로 비워둡니다.
+  // 나중에 Dev Client + Firebase 설정 후 다시 구현하면 됩니다.
 };
 
 /**
@@ -43,7 +26,8 @@ export const useAuth = () => {
       setIsLoading(true);
       setError(null);
 
-      const res = await signIn({ email, password });
+      // ✅ 백엔드 API 기반 로그인
+      const res = await signIn(email, password);
 
       if (res?.accessToken) {
         setToken(res.accessToken);

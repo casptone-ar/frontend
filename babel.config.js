@@ -4,17 +4,6 @@ module.exports = (api) => {
     presets: ["babel-preset-expo"],
     plugins: [
       [
-        "@tamagui/babel-plugin",
-        {
-          components: ["tamagui"],
-          config: "./tamagui.config.ts",
-          logTimings: true,
-          disableExtraction: process.env.NODE_ENV === "development",
-        },
-      ],
-      // NOTE: this is only necessary if you are using reanimated for animations
-      "react-native-reanimated/plugin",
-      [
         "module-resolver",
         {
           root: ["."],
@@ -40,6 +29,17 @@ module.exports = (api) => {
           ],
         },
       ],
+      [
+        "@tamagui/babel-plugin",
+        {
+          components: ["tamagui"],
+          config: "./tamagui.config.ts",
+          logTimings: true,
+          disableExtraction: process.env.NODE_ENV === "development",
+        },
+      ],
+      // 🔥 이 플러그인은 반드시 가장 마지막에 있어야 한다!
+      "react-native-reanimated/plugin",
     ],
   };
 };

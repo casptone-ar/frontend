@@ -1,3 +1,5 @@
+// app/AppProvider.tsx
+
 import React, { useEffect, useMemo, useState } from "react";
 import { useRouter } from "expo-router";
 import { useStore } from "zustand";
@@ -8,13 +10,14 @@ import { petStore } from "@/View/store/petStore";
 import { ScreenContainer } from "@/View/core/ScreenContainer/ScreenContainer";
 import { YStack } from "tamagui";
 import { Text } from "@/View/core/Text/Text";
-import { API } from "@/service/lib/Http/adapter"; // ✅ 추가: API 어댑터
+import { API } from "@/service/lib/Http/adapter";
 
-/**
- * 앱 전역 Provider + 네비게이션 가드
- * - 토큰/유저/펫 상태를 보고 초기 진입 라우트를 결정
- */
-export function AppProvider({ children }: { children: React.ReactNode }) {
+type AppProviderProps = {
+  children: React.ReactNode;
+  appReady?: boolean; // 👈 추가
+};
+
+export function AppProvider({ children, appReady }: AppProviderProps) {
   const router = useRouter();
 
   // auth
@@ -36,7 +39,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   // ✅ 앱 최초 마운트 시 API 연결 테스트 (한 번만)
   useEffect(() => {
-    console.log("API BASE URL =", process.env.EXPO_PUBLIC_API_BASE_URL); // (선택) 확인용
+    console.log("API BASE URL =", process.env.EXPO_PUBLIC_API_BASE_URL);
     API.get("/api-docs")
       .then(() => console.log("✅ 서버 연결 성공"))
       .catch((e) => console.error("❌ 서버 연결 실패", e));
@@ -45,7 +48,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   // 1) 앱 부팅: 토큰 복구 + getMe
   useEffect(() => {
     (async () => {
-      await bootstrap(); // accessToken/refreshToken 복구 + /me 시도
+      await bootstrap();
       setBootstrapped(true);
     })();
   }, [bootstrap]);
@@ -61,13 +64,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const targetRoute = useMemo(() => {
     if (!bootstrapped) return null;
 
-    // 토큰/유저가 없으면 → 로그인
     if (!accessToken || !user) return "/(auth)/sign-in";
-
-    // 유저는 있으나 활성 펫이 없으면 → 온보딩(펫 선택)
     if (!activePet) return "/(onboarding)/select-pet";
 
-    // 둘 다 있으면 → 홈
     return "/(protected)/home";
   }, [bootstrapped, accessToken, user, activePet]);
 
@@ -75,9 +74,13 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const stillLoading =
     !bootstrapped || authLoading || (user ? petLoading && !activePet : false);
 
+  // 5) 준비되면 네비게이션 (한 tick 뒤에)
   useEffect(() => {
     if (!stillLoading && targetRoute) {
-      router.replace(targetRoute);
+      const id = setTimeout(() => {
+        router.replace(targetRoute);
+      }, 0);
+      return () => clearTimeout(id);
     }
   }, [stillLoading, targetRoute, router]);
 
@@ -96,3 +99,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   return <>{children}</>;
 }
+
+// ✅ default export 그대로 유지
+export default AppProvider;

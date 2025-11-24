@@ -1,5 +1,5 @@
 // src/domain/mappers.ts
-import type { UserPet } from "@/domain/pet/api-types"; // ✅ 앱 내부 표준형
+import type { BackendUserPet } from "@/domain/pet/api-types"; // ✅ 앱 내부 표준형
 import type { MissionPreview as ApiMissionPreview } from "@/service/api/types"; // ✅ 서버 응답 원본
 import type { CurrentPetStatus, PetStats } from "@/domain/pet/types";
 import type { MissionPreview as UiMissionPreview } from "@/domain/mission/types";
@@ -11,24 +11,24 @@ function estimateExpToNextLevel(level: number): number {
 
 /** 🐾 UserPet → CurrentPetStatus (홈 화면용) */
 export function mapUserPetToCurrentPetStatus(
-  p: UserPet | null
+  p: BackendUserPet | null
 ): CurrentPetStatus | null {
   if (!p) return null;
   return {
-    id: String(p.id),
+    id: String(p.user_pet_id),
     name: p.nickname,
     level: p.level ?? 1,
-    experience: p.experience ?? 0,
+    experience: p.experience_points ?? 0,
     experienceToNextLevel: estimateExpToNextLevel(p.level ?? 1),
     imageUrl: undefined, // 필요 시 master 정보에서 추출
   };
 }
 
 /** 🧩 UserPet → PetStats (상태바 등에서 사용) */
-export function mapUserPetToPetStats(p: UserPet | null): PetStats {
+export function mapUserPetToPetStats(p: BackendUserPet | null): PetStats {
   return {
     level: p?.level ?? 0,
-    experience: p?.experience ?? 0,
+    experience: p?.experience_points ?? 0,
     health: 100,
     happiness: 100,
   };

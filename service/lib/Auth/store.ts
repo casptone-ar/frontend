@@ -1,7 +1,6 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { createStore, useStore } from "zustand";
 import { createJSONStorage, devtools, persist } from "zustand/middleware";
-import type { FirebaseAuthTypes } from "@react-native-firebase/auth";
 import { merge } from "es-toolkit";
 
 /**
@@ -31,10 +30,17 @@ const initialState: AuthStoreState<null> = {
   isAuthenticated: false,
 };
 
+// 앱에서 기본으로 쓸 간단한 유저 타입 (필요하면 나중에 확장)
+export type BasicUser = {
+  id?: string | number;
+  email?: string | null;
+  name?: string | null;
+};
+
 /**
- * ✅ 정상 동작 버전
+ * ✅ Firebase에 의존하지 않는 AuthStore
  */
-export const createAuthStore = <T = FirebaseAuthTypes.User>() =>
+export const createAuthStore = <T = BasicUser>() =>
   createStore<AuthStoreI<T>>()(
     devtools(
       persist(
@@ -61,5 +67,4 @@ export const createAuthStore = <T = FirebaseAuthTypes.User>() =>
   );
 
 export const AuthStore = createAuthStore();
-
 export const useAuthStore = () => useStore(AuthStore);

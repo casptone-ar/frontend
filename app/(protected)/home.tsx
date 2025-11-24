@@ -9,39 +9,63 @@ import { ScreenContainer } from "@/View/core/ScreenContainer/ScreenContainer";
 import { Text } from "@/View/core/Text/Text";
 import { Settings } from "@tamagui/lucide-icons";
 
-import { MissionPreviewList } from "./components/home/MissionPreviewList";
-import { PetInteractionArea } from "./components/home/PetInteractionArea";
-import { PetStatusBar } from "./components/home/PetStatusBar";
+import { MissionPreviewList } from "@/View/components/home/MissionPreviewList";
+import { PetInteractionArea } from "@/View/components/home/PetInteractionArea";
+import { PetStatusBar } from "@/View/components/home/PetStatusBar";
 
 import type { MissionPreview as UiMissionPreview } from "@/domain/mission/types";
 import type { CurrentPetStatus, PetStats } from "@/domain/pet/types";
 
-import { getActivePet } from "@/service/api/pets";
-import { getMissions } from "@/service/api/missions";
-import {
-  mapUserPetToCurrentPetStatus,
-  mapUserPetToPetStats,
-  mapApiMissionsToUi,
-} from "@/domain/mappers";
-
-// ✅ 헬스 스토어 가져오기
+// ✅ 헬스 스토어
 import { useHealth } from "@/View/store/healthStore";
+
+// ✅ 홈 화면용 목 데이터
+const MOCK_PET_STATUS: CurrentPetStatus = {
+  id: "1",
+  name: "네오",
+  level: 1,
+  experience: 0,
+  experienceToNextLevel: 200,
+  imageUrl: undefined,
+  modelUrl: undefined,
+};
+
+const MOCK_PET_STATS: PetStats = {
+  level: 1,
+  experience: 120,
+  health: 80,
+  happiness: 90,
+};
+
+const MOCK_MISSIONS: UiMissionPreview[] = [
+  {
+    id: "mission_1",
+    title: "오늘 3,000보 걷기",
+    statusText: "1,500 / 3,000보 진행 중",
+    typeText: "일일 미션",
+    actionRequired: false,
+    // iconUrl: "https://..."  // 필요하면 나중에 추가
+  },
+  {
+    id: "mission_2",
+    title: "상점에서 아이템 하나 사기",
+    statusText: "잠금 상태",
+    typeText: "주간 미션",
+    actionRequired: false,
+  },
+];
 
 export default function HomeScreen() {
   const router = useRouter();
 
-  const [petStatus, setPetStatus] = useState<CurrentPetStatus | null>(null);
-  const [petStats, setPetStats] = useState<PetStats>({
-    level: 0,
-    experience: 0,
-    health: 0,
-    happiness: 0,
-  });
-  const [missionPreviews, setMissionPreviews] = useState<UiMissionPreview[]>(
-    []
+  const [petStatus, setPetStatus] = useState<CurrentPetStatus | null>(
+    MOCK_PET_STATUS
   );
-  const [isLoading, setIsLoading] = useState(true);
-  const [isLoadingMissions, setIsLoadingMissions] = useState(true);
+  const [petStats, setPetStats] = useState<PetStats>(MOCK_PET_STATS);
+  const [missionPreviews, setMissionPreviews] =
+    useState<UiMissionPreview[]>(MOCK_MISSIONS);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isLoadingMissions, setIsLoadingMissions] = useState(false);
 
   // ✅ 헬스 스토어에서 필요한 상태와 동기화 함수 가져오기
   const {
@@ -49,23 +73,20 @@ export default function HomeScreen() {
     isLoading: healthLoading,
     error: healthError,
     refreshToday,
-    syncSteps, // 🆕 추가: 서버로 걸음 수 전송
+    syncSteps,
   } = useHealth();
 
   const loadHomeScreenData = useCallback(async () => {
     setIsLoading(true);
     setIsLoadingMissions(true);
     try {
-      const [apiUserPet, missionRes] = await Promise.all([
-        getActivePet(),
-        getMissions("daily"),
-      ]);
-
-      setPetStatus(mapUserPetToCurrentPetStatus(apiUserPet));
-      setPetStats(mapUserPetToPetStats(apiUserPet));
-      setMissionPreviews(mapApiMissionsToUi(missionRes.items ?? []));
+      // 여기서는 그냥 목 데이터 다시 세팅만 해줌
+      await new Promise((r) => setTimeout(r, 400));
+      setPetStatus(MOCK_PET_STATUS);
+      setPetStats(MOCK_PET_STATS);
+      setMissionPreviews(MOCK_MISSIONS);
     } catch (error) {
-      console.error("Failed to load home screen data:", error);
+      console.error("Failed to load home screen data (mock):", error);
       Alert.alert("오류", "홈 화면 데이터를 불러오는 데 실패했습니다.");
     } finally {
       setIsLoading(false);
@@ -73,16 +94,12 @@ export default function HomeScreen() {
     }
   }, []);
 
-  // ✅ 화면 진입 시: 데이터 + 걸음 동기화 모두 실행
+  // ✅ 화면 진입 시: 데이터 + 걸음 동기화
   useFocusEffect(
     useCallback(() => {
       (async () => {
         await loadHomeScreenData();
-
-        // ✅ HealthKit에서 최신 걸음 읽기
         await refreshToday();
-
-        // ✅ NEW: 서버로 증분 걸음 전송 (경험치 반영)
         await syncSteps();
       })();
 
@@ -90,11 +107,11 @@ export default function HomeScreen() {
     }, [loadHomeScreenData, refreshToday, syncSteps])
   );
 
-  // ✅ 첫 마운트 시에도 1회 실행 (선택 사항)
+  // ✅ 첫 마운트 시에도 1회 실행
   useEffect(() => {
     (async () => {
       await refreshToday();
-      await syncSteps(); // 🆕 추가
+      await syncSteps();
     })();
   }, [refreshToday, syncSteps]);
 
@@ -173,7 +190,7 @@ export default function HomeScreen() {
                 variant="ghost"
                 onPress={async () => {
                   await refreshToday();
-                  await syncSteps(); // ✅ 새로고침 시에도 서버 전송
+                  await syncSteps();
                 }}
                 disabled={healthLoading}
               >

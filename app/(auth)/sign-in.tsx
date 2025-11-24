@@ -96,8 +96,9 @@ export default function SignInScreen() {
   const handleSignIn = async () => {
     try {
       const ok = await login(email, password);
-      if (ok) router.replace("/(protected)/home");
-      else console.warn("로그인 실패:", error);
+      if (!ok) {
+        console.warn("로그인 실패:", error);
+      }
     } catch (e) {
       console.error("로그인 중 에러:", e);
     }

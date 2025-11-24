@@ -6,7 +6,7 @@
  */
 
 import { API } from "@/service/lib/Http/adapter";
-import type { ApiSuccess } from "@/service/api/types";
+import type { ApiSuccess, MissionPreview } from "@/service/api/types";
 
 /**
  * Swagger 기준 미션 타입 필터
@@ -19,13 +19,13 @@ export type MissionTypeFilter = "daily" | "weekly" | "all";
  * 👉 Swagger 전체 필드를 아직 100% 알 수 없어서 느슨하게 둠
  *    스펙 확정되면 여기서 필드 좁혀가면 됩니다.
  */
-export type RawMission = Record<string, unknown>;
+export type RawMission = MissionPreview;
 
 /**
  * 미션 목록 응답 래퍼
  * (백엔드 공통 응답: { success: boolean; data: T } 형태라고 가정)
  */
-export type GetMissionsResponse = ApiSuccess<RawMission[]>;
+export type GetMissionsResponse = ApiSuccess<MissionPreview[]>;
 
 /**
  * 보상 수령 응답 (예: { success: true, data: { claimed_coins: number } })
@@ -39,10 +39,10 @@ export type ClaimRewardResponse = ApiSuccess<unknown>;
  */
 export async function getMissions(
   type: MissionTypeFilter = "all"
-): Promise<GetMissionsResponse> {
+): Promise<MissionPreview[]> {
   const query = type ? `?type=${type}` : "";
-  // Swagger: GET /v1/missions?type=all
-  return API.get<GetMissionsResponse>(`/v1/missions${query}`);
+  const res = await API.get<GetMissionsResponse>(`/v1/missions${query}`);
+  return res.data;
 }
 
 /**
@@ -51,10 +51,8 @@ export async function getMissions(
  */
 export async function claimMissionReward(
   userMissionId: number
-): Promise<ClaimRewardResponse> {
-  // Swagger: POST /v1/missions/{missionId}/claim-reward
-  // body는 없는 것으로 보여서 {} 전달
-  return API.post<ClaimRewardResponse>(
+): Promise<ApiSuccess<unknown>> {
+  return API.post<ApiSuccess<unknown>>(
     `/v1/missions/${userMissionId}/claim-reward`,
     {}
   );

@@ -1,67 +1,51 @@
-// application/hooks/useMissions.ts
-import { useEffect } from "react";
-import { useStore } from "zustand";
+// service/inbound/query/useMissions.ts
 
-import { missionStore } from "@/View/store/missionStore";
-import type { MissionFilter } from "@/View/store/missionStore";
+import { useAsyncFn, useFetch } from "./utils";
+import {
+  getMissions,
+  claimMissionReward,
+  type MissionTypeFilter,
+} from "@/service/api/missions";
+import type { MissionPreview } from "@/service/api/types";
 
 /**
- * 미션 목록 + 필터 + 보상 수령까지 한 번에 관리하는 훅
+ * 🧩 미션 목록 조회 훅
  *
- * @param autoFetch true일 때, 마운트 시 자동으로 현재 filter 기준으로 fetch
+ * - scope: "daily" | "weekly" | "all"
+ * - auto: true 면 마운트 시 자동 호출
+ * - getMissions(scope) 는 MissionPreview[] 를 바로 리턴한다고 가정
  */
-export function useMissions(autoFetch: boolean = true) {
-  const {
-    missions,
-    isLoading,
-    error,
-    filter,
-    fetchMissions,
-    claimReward,
-    setFilter,
-  } = useStore(missionStore);
+export function useMissions(scope: MissionTypeFilter = "all", auto = true) {
+  // ✅ 이미 MissionPreview[] 를 리턴하므로 따로 .data 꺼낼 필요 없음
+  const fetcher = () => getMissions(scope);
 
-  useEffect(() => {
-    if (!autoFetch) return;
-    // 현재 filter 기준으로 자동 로딩
-    fetchMissions(filter).catch((err) => {
-      console.error("useMissions auto fetch error:", err);
-    });
-  }, [autoFetch, filter, fetchMissions]);
+  const { data, error, loading, refetch, setData } = useFetch<MissionPreview[]>(
+    fetcher,
+    auto
+  );
 
   return {
-    missions,
-    isLoading,
+    missions: data ?? [],
     error,
-    filter,
-
-    fetchMissions,
-    claimReward,
-    setFilter,
+    loading,
+    refetch,
+    setMissions: setData,
   } as const;
 }
 
 /**
- * 특정 필터(예: "daily" 탭용)만 바로 쓰고 싶을 때
- * - 내부적으로 store.filter도 같이 바꿔줌
+ * 🎁 미션 보상 수령 훅
+ *
+ * - user_mission_id 를 넣어서 보상 수령 API 호출
  */
-export function useMissionsByFilter(
-  filter: MissionFilter,
-  autoFetch: boolean = true
-) {
-  const { setFilter, ...rest } = useMissions(false);
-
-  useEffect(() => {
-    setFilter(filter);
-    if (autoFetch) {
-      rest.fetchMissions(filter).catch((err) => {
-        console.error("useMissionsByFilter auto fetch error:", err);
-      });
-    }
-  }, [filter, autoFetch, setFilter, rest.fetchMissions]);
+export function useClaimMissionReward() {
+  const { loading, error, run } = useAsyncFn((user_mission_id: number) =>
+    claimMissionReward(user_mission_id)
+  );
 
   return {
-    ...rest,
-    filter,
+    loading,
+    error,
+    claimReward: run,
   } as const;
 }

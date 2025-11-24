@@ -9,7 +9,6 @@ export type PetOption = {
   id: string; // 애완동물 고유 ID (예: 'cat_01', 'dog_01')
   name: string; // 애완동물 이름 (예: '씩씩한 고양이', '명랑한 강아지')
   description: string; // 간단한 설명
-  image: string; // image 속성 추가
   modelUrl?: string; // 3D 모델 경로 (AR 및 컬렉션용)
   thumbnailUrl?: string; // 선택 화면용 2D 썸네일
   initialStats?: PetStats; // 초기 스탯 (선택적)
@@ -100,9 +99,3 @@ export interface PetAscensionResult {
   // 컬렉션에 추가된 정보 (ID 등)를 포함할 수도 있음
   // collectedPetEntryId?: string;
 }
-
-// 향후 Pet 도메인과 관련된 다른 타입들을 여기에 추가할 수 있습니다.
-// 예를 들어, 사용자가 현재 키우고 있는 애완동물의 상세 정보 타입 등
-// export type CurrentPetStatus = {
-//   ...
-// }
