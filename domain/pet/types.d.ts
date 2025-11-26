@@ -1,6 +1,11 @@
+import type { PetSpriteKey } from "./assets";
+
 /**
  * @file Pet 도메인 관련 타입 정의
  */
+
+/** 3D 모델/펫 종류 키 */
+export type PetModelKey = "beagle" | "cat" | "shiba" | "rabbit" | "parrot";
 
 /**
  * 애완동물 선택 화면에서 사용될 애완동물 옵션의 타입입니다.
@@ -12,6 +17,7 @@ export type PetOption = {
   modelUrl?: string; // 3D 모델 경로 (AR 및 컬렉션용)
   thumbnailUrl?: string; // 선택 화면용 2D 썸네일
   initialStats?: PetStats; // 초기 스탯 (선택적)
+  modelKey?: PetModelKey; // 🔹 어떤 펫 3D/PNG 자산을 쓸지 식별하는 키
 };
 
 export type PetStats = {
@@ -87,6 +93,7 @@ export interface PetARData {
   currentAnimation: PetAnimationType; // 현재 재생 중인 애니메이션
   scale?: number; // AR 공간에서의 애완동물 크기 (기본값 1)
   positionOffset?: { x: number; y: number; z: number }; // AR 공간에서의 위치 오프셋 (선택적)
+  spriteKey?: PetSpriteKey;
 }
 
 /**

@@ -11,20 +11,23 @@ import {
 import { CameraView, useCameraPermissions } from "expo-camera";
 import { Paragraph, YStack } from "tamagui";
 import type { PetAnimationType } from "@/domain/pet/types";
+import { PET_SPRITE_ASSETS, type PetSpriteKey } from "@/domain/pet/assets";
 
 type ARViewProps = {
   petModelUrl: string;
   currentAnimation: PetAnimationType;
-  scale?: number; // 🔹 선택적
+  scale?: number;
   onPetAnchorFound?: () => void;
   onPetPlaced?: () => void;
   onPetTapped?: () => void;
-  onError?: (error: Error) => void;
+
+  /** 어떤 스프라이트를 쓸지 선택 (없으면 기본 cat) */
+  spriteKey?: PetSpriteKey;
 };
 
 type Pos = { x: number; y: number };
 
-const PET_SIZE = 160; // 펫 스프라이트 크기(px)
+const PET_SIZE = 260;
 
 export const ARView = ({
   petModelUrl,
@@ -33,33 +36,33 @@ export const ARView = ({
   onPetAnchorFound,
   onPetPlaced,
   onPetTapped,
+  spriteKey = "cat",
 }: ARViewProps) => {
-  // 🔹 1. 모든 Hook은 여기 위쪽에 몰아놓기
+  // 🔹 모든 Hook은 위에서 한 번씩, 어떤 경우에도 항상 호출되게
   const [permission, requestPermission] = useCameraPermissions();
   const [facing] = useState<"front" | "back">("back");
-
-  const [containerSize, setContainerSize] = useState<{
-    width: number;
-    height: number;
-  }>({ width: 0, height: 0 });
-
+  const [containerSize, setContainerSize] = useState({
+    width: 0,
+    height: 0,
+  });
   const [petPos, setPetPos] = useState<Pos | null>(null);
 
-  // 🔹 2. 권한 여부와 상관없이 항상 호출되는 useEffect
+  // 🔹 권한 허용된 상태에서만 앵커/배치 이벤트 한 번 쏘기
   useEffect(() => {
+    if (!permission?.granted) return;
+
     const timer = setTimeout(() => {
       onPetAnchorFound?.();
       onPetPlaced?.();
     }, 800);
-    return () => clearTimeout(timer);
-  }, [onPetAnchorFound, onPetPlaced]);
 
-  // 🔹 레이아웃 사이즈 저장
+    return () => clearTimeout(timer);
+  }, [permission?.granted, onPetAnchorFound, onPetPlaced]);
+
   const handleLayout = (e: LayoutChangeEvent) => {
     const { width, height } = e.nativeEvent.layout;
     setContainerSize({ width, height });
 
-    // 처음 한 번은 화면 아래쪽 가운데에 펫 위치시킴
     if (!petPos && width > 0 && height > 0) {
       setPetPos({
         x: width / 2,
@@ -68,14 +71,15 @@ export const ARView = ({
     }
   };
 
-  // 🔹 화면 탭 → 펫 위치 옮기고, onPetTapped 호출
   const handlePress = (e: GestureResponderEvent) => {
     const { locationX, locationY } = e.nativeEvent;
     setPetPos({ x: locationX, y: locationY });
     onPetTapped?.();
   };
 
-  // 🔹 권한 로딩 중
+  // 🔹 여기부터는 Hook 없음 (return 해도 OK)
+
+  // 권한 로딩 중
   if (!permission) {
     return (
       <YStack f={1} jc="center" ai="center">
@@ -84,7 +88,7 @@ export const ARView = ({
     );
   }
 
-  // 🔹 권한 아직 없음
+  // 권한 아직 없음
   if (!permission.granted) {
     return (
       <YStack f={1} jc="center" ai="center" p="$4" space="$3">
@@ -108,7 +112,6 @@ export const ARView = ({
     );
   }
 
-  // 🔹 펫 위치 계산 (값 없으면 중앙 근처에 기본값)
   const effectivePos: Pos | null =
     petPos && containerSize.width && containerSize.height
       ? petPos
@@ -116,23 +119,22 @@ export const ARView = ({
       ? { x: containerSize.width / 2, y: containerSize.height * 0.6 }
       : null;
 
+  // 스프라이트 PNG (domain/pet/assets.ts 에서 가져옴)
+  const spriteSource = PET_SPRITE_ASSETS[spriteKey];
+
   return (
     <Pressable
       style={styles.container}
       onPress={handlePress}
       onLayout={handleLayout}
     >
-      {/* 🔹 실제 카메라 프리뷰 */}
+      {/* 카메라 프리뷰 */}
       <CameraView style={styles.camera} facing={facing} />
 
-      {/* 🔹 카메라 위 펫 이미지 (투명 PNG 사용 가능) */}
+      {/* 카메라 위에 펫 PNG 오버레이 */}
       {effectivePos && (
         <Image
-          // TODO: 이 부분을 나중에 네 프로젝트 에셋 경로로 교체하면 됨
-          // 예: source={require("@/assets/pets/dog_idle.png")}
-          source={{
-            uri: "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6e/Golde33443.jpg/320px-Golde33443.jpg",
-          }}
+          source={spriteSource}
           style={{
             position: "absolute",
             width: PET_SIZE * scale,
@@ -144,7 +146,7 @@ export const ARView = ({
         />
       )}
 
-      {/* 🔹 카메라 위 오버레이 mock UI */}
+      {/* 디버그/설명 오버레이 */}
       <YStack
         position="absolute"
         bottom={0}

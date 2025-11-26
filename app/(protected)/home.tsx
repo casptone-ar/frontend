@@ -26,8 +26,7 @@ const MOCK_PET_STATUS: CurrentPetStatus = {
   level: 1,
   experience: 0,
   experienceToNextLevel: 200,
-  imageUrl: undefined,
-  modelUrl: undefined,
+  imageUrl: require("@/assets/pets/cat.png"),
 };
 
 const MOCK_PET_STATS: PetStats = {
