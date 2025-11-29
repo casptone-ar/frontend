@@ -1,11 +1,13 @@
-import type { CollectedPet } from "@/domain/collection/types";
-import { useFocusEffect, useRouter } from "expo-router";
-import { useCallback, useState } from "react";
-import { Alert } from "react-native";
-import { H2, Paragraph, Separator, Spinner, YStack } from "tamagui";
-import { CollectedPetGrid } from "../components/collection/CollectedPetGrid";
+// app/(protected)/collection/index.tsx
 
-// --- Mock Data & Service ---
+import { useState } from "react";
+import { useRouter } from "expo-router";
+import { H2, Paragraph, Separator, YStack } from "tamagui";
+
+import type { CollectedPet } from "@/domain/collection/types";
+import { CollectedPetGrid } from "@/View/components/collection/CollectedPetGrid";
+
+// 🔹 컬렉션 목 데이터 (3개 정도 예시)
 const MOCK_COLLECTED_PETS: CollectedPet[] = [
   {
     id: "collected_pet_001",
@@ -13,8 +15,8 @@ const MOCK_COLLECTED_PETS: CollectedPet[] = [
     name: "용감한 댕댕이",
     description: "첫 번째로 승천한 전설의 댕댕이",
     modelUrl: "models/legend_dog.glb",
-    thumbnailUrl: "thumbnails/legend_dog_thumb.png", // 실제 썸네일 경로
-    ascendedAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(), // 10일 전
+    thumbnailUrl: "thumbnails/legend_dog_thumb.png",
+    ascendedAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(),
     finalLevel: 10,
     missionTimelineId: "timeline_dog001_ascended_1",
   },
@@ -25,64 +27,31 @@ const MOCK_COLLECTED_PETS: CollectedPet[] = [
     description: "많은 미션을 클리어하고 승천한 고양이",
     modelUrl: "models/wise_cat.glb",
     thumbnailUrl: "thumbnails/wise_cat_thumb.png",
-    ascendedAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(), // 5일 전
+    ascendedAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
     finalLevel: 10,
     missionTimelineId: "timeline_cat001_ascended_1",
   },
-  // ... 더 많은 승천 펫 데이터
+  {
+    id: "collected_pet_003",
+    petId: "rabbit001_ascended_1",
+    name: "점프하는 토끼",
+    description: "언덕을 뛰어다니며 성장한 토끼",
+    modelUrl: "models/jump_rabbit.glb",
+    thumbnailUrl: "thumbnails/jump_rabbit_thumb.png",
+    ascendedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+    finalLevel: 7,
+    missionTimelineId: "timeline_rabbit001_ascended_1",
+  },
 ];
 
-const fetchCollectedPets = async (): Promise<CollectedPet[]> => {
-  return new Promise((resolve) =>
-    setTimeout(() => resolve(MOCK_COLLECTED_PETS), 600)
-  );
-};
-// --- End Mock Data & Service ---
-
-/**
- * 컬렉션(동물농장) 메인 화면입니다.
- * 사용자가 승천시킨 애완동물들의 목록을 그리드 형태로 보여줍니다.
- * 각 애완동물을 선택하면 상세 정보 화면으로 이동합니다.
- */
 export default function CollectionScreen() {
   const router = useRouter();
-  const [collectedPets, setCollectedPets] = useState<CollectedPet[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-
-  const loadCollectedPets = useCallback(async () => {
-    setIsLoading(true);
-    try {
-      // TODO: 실제 application/collection/useCollectedPets.ts 훅 사용
-      const pets = await fetchCollectedPets();
-      setCollectedPets(pets);
-    } catch (error) {
-      console.error("Failed to load collected pets:", error);
-      Alert.alert("오류", "컬렉션 정보를 불러오는 데 실패했습니다.");
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
-
-  useFocusEffect(
-    useCallback(() => {
-      loadCollectedPets();
-    }, [loadCollectedPets])
-  );
+  // 🔹 지금은 그냥 고정 목 데이터 사용
+  const [collectedPets] = useState<CollectedPet[]>(MOCK_COLLECTED_PETS);
 
   const handleSelectPet = (pet: CollectedPet) => {
-    // pet.id는 CollectedPet의 id, pet.petId는 원본 Pet의 id일 수 있음.
-    // 여기서는 CollectedPet의 id (승천 기록 ID)를 상세 페이지로 전달한다고 가정합니다.
     router.push(`/collection/${pet.id}`);
   };
-
-  if (isLoading) {
-    return (
-      <YStack f={1} jc="center" ai="center" space="$2">
-        <Spinner />
-        <Paragraph>컬렉션 로딩 중...</Paragraph>
-      </YStack>
-    );
-  }
 
   return (
     <YStack f={1} pt="$2">
@@ -92,7 +61,9 @@ export default function CollectionScreen() {
           승천한 애완동물들을 여기서 다시 만나보세요.
         </Paragraph>
       </YStack>
+
       <Separator />
+
       {collectedPets.length > 0 ? (
         <CollectedPetGrid pets={collectedPets} onSelectPet={handleSelectPet} />
       ) : (

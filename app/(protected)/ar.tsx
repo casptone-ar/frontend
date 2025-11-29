@@ -3,28 +3,29 @@ import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import { Alert } from "react-native";
 import { Button, Paragraph, Spinner, YStack } from "tamagui";
-import { ARTouchControls } from "./components/ar/ARTouchControls";
-import { ARView } from "./components/ar/ARView";
+import { ARTouchControls } from "@/View/components/ar/ARTouchControls";
+import { ARView } from "@/View/components/ar/ARView";
 
 // --- Mock Data & Service ---
 // 실제로는 service/application 레이어에서 현재 활성화된 애완동물 정보를 가져옵니다.
 const MOCK_ACTIVE_PET: Pet | null = {
   id: "pet001",
   ownerId: "user123",
-  name: "장금이",
-  description: "요리를 잘하는 댕댕이",
-  modelUrl: "models/dog_chef.glb", // 실제 모델 경로로 대체 필요
+  name: "네오",
+  description: "요리를 잘하는 고양이",
+  modelUrl: "assets/models/pets/cat.glb", // 실제 모델 경로로 대체 필요
   thumbnailUrl: "images/dog_chef_thumb.png",
   level: 5,
   experience: 350,
-  currentStats: { health: 80, happiness: 90 },
+  currentStats: { health: 80, happiness: 90, experience: 350, level: 5 },
   createdAt: new Date().toISOString(),
   updatedAt: new Date().toISOString(),
   arData: {
-    modelUrl: "models/dog_chef.glb", // 실제 모델 경로로 대체 필요
+    modelUrl: "assets/models/pets/cat.glb", // 실제 모델 경로로 대체 필요
     availableAnimations: ["idle", "walk", "run", "happy_reaction", "dance"],
     currentAnimation: "idle",
-    scale: 0.8,
+    scale: 1.8,
+    spriteKey: "cat",
   },
 };
 
@@ -126,6 +127,7 @@ export default function ARScreen() {
         petModelUrl={petARData.modelUrl}
         currentAnimation={petARData.currentAnimation}
         scale={petARData.scale}
+        spriteKey={petARData.spriteKey}
         onPetAnchorFound={() => console.log("ARScreen: Pet anchor found")}
         onPetPlaced={() => {
           console.log("ARScreen: Pet placed in AR");

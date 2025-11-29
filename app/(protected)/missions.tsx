@@ -1,266 +1,164 @@
+// app/(protected)/missions.tsx
+
+import { useMemo, useState } from "react";
+import { XStack } from "tamagui";
+import { useRouter } from "expo-router";
+
 import { ScreenContainer } from "@/View/core/ScreenContainer/ScreenContainer";
 import { SegmentedTabs } from "@/View/core/SegmentedTabs";
 import { Text } from "@/View/core/Text/Text";
-import type {
-  BaseMission,
-  Mission,
-  MissionFilter,
-  MissionStatus,
-} from "@/domain/mission/types";
-import { useCallback, useEffect, useState } from "react"; // React import
-import { Alert } from "react-native";
-import { XStack } from "tamagui";
-import { MissionList } from "./components/missions/MissionList";
+import { MissionList } from "@/View/components/missions/MissionList";
 
-// --- Mock Data & Service ---
-// 실제로는 service/application 레이어에서 zustand 스토어 또는 react-query 훅을 통해 가져옵니다.
-const MOCK_DAILY_MISSIONS: Mission[] = [
-  {
-    id: "d001",
-    type: "daily",
-    title: "5000보 걷기",
-    description: "오늘 하루 활기차게 걸어보세요!",
-    goal: 5000,
-    currentProgress: 2500,
-    unit: "보",
-    rewardCoin: 10,
-    status: "in_progress",
-  },
-  {
-    id: "d002",
-    type: "daily",
-    title: "애완동물과 3번 놀아주기",
-    description: "애완동물과의 유대감을 높여요.",
-    goal: 3,
-    currentProgress: 1,
-    unit: "회",
-    rewardCoin: 5,
-    status: "in_progress",
-  },
-  {
-    id: "d003",
-    type: "daily",
-    title: "상점 방문하기",
-    description: "새로운 아이템이 있는지 확인해보세요.",
-    goal: 1,
-    currentProgress: 0,
-    unit: "회",
-    rewardCoin: 2,
-    status: "incomplete",
-  },
-];
+import type { Mission, MissionFilter } from "@/domain/mission/types";
 
-const MOCK_WEEKLY_MISSIONS: Mission[] = [
-  {
-    id: "w001",
-    type: "weekly",
-    title: "일주일 동안 35000보 걷기",
-    description: "이번 주 꾸준히 건강을 챙겨요.",
-    goal: 35000,
-    currentProgress: 12000,
-    unit: "보",
-    rewardCoin: 50,
-    status: "in_progress",
-  },
-  {
-    id: "w002",
-    type: "weekly",
-    title: "일일 미션 5회 완료하기",
-    description: "매일의 작은 성공이 큰 보상으로!",
-    goal: 5,
-    currentProgress: 2,
-    unit: "회",
-    rewardCoin: 30,
-    status: "in_progress",
-  },
-];
+/* ---------------------------------------------
+ *  🔥 완전 Mock 데이터 (일일 3, 주간 3, 완료 3 = 총 9개)
+ * -------------------------------------------*/
 
-const MOCK_ALL_MISSIONS: BaseMission[] = [
+const MOCK_MISSIONS: Mission[] = [
+  // --- Daily (3) ---
   {
-    id: "d1",
-    title: "일일 미션 1: 아침 조깅하기",
-    description: "공원에서 30분 이상 조깅하세요.",
-    type: "daily",
-    status: "pending",
-    rewards: [{ type: "coin", amount: 10 }],
-    targetValue: 1,
-    currentValue: 0,
-    iconUrl: "https://via.placeholder.com/50/A0E0FF/000000?Text=D1",
-  },
-  {
-    id: "d2",
-    title: "일일 미션 2: 물 2L 마시기",
-    description: "건강을 위해 충분한 수분을 섭취하세요.",
+    id: "daily_1",
+    title: "오늘 3,000보 걷기",
+    description: "펫과 함께 산책하며 3,000보를 걸어보세요.",
     type: "daily",
     status: "in-progress",
-    rewards: [{ type: "experience", amount: 50 }],
-    targetValue: 2000,
+    rewards: [{ type: "coin", amount: 50 }],
+    targetValue: 3000,
     currentValue: 1200,
-    iconUrl: "https://via.placeholder.com/50/A0FFFF/000000?Text=D2",
   },
   {
-    id: "w1",
-    title: "주간 미션 1: 친구와 함께 운동 3회",
-    description: "친구와 함께 즐겁게 운동하고 건강도 챙기세요.",
-    type: "weekly",
-    status: "completed",
-    rewards: [
-      { type: "coin", amount: 50 },
-      { type: "experience", amount: 100 },
-    ],
+    id: "daily_2",
+    title: "상점에서 아이템 구매하기",
+    description: "상점에서 아이템을 구매해보세요.",
+    type: "daily",
+    status: "pending",
+    rewards: [{ type: "coin", amount: 30 }],
+    targetValue: 1,
+    currentValue: 0,
+  },
+  {
+    id: "daily_3",
+    title: "펫과 3번 상호작용",
+    description: "펫을 3번 터치해 놀아주세요.",
+    type: "daily",
+    status: "pending",
+    rewards: [{ type: "experience", amount: 20 }],
     targetValue: 3,
-    currentValue: 3,
-    iconUrl: "https://via.placeholder.com/50/D0A0FF/000000?Text=W1",
+    currentValue: 0,
+  },
+
+  // --- Weekly (3) ---
+  {
+    id: "weekly_1",
+    title: "총 2만 보 걷기",
+    description: "일주일 동안 누적 20,000보 걷기.",
+    type: "weekly",
+    status: "in-progress",
+    rewards: [{ type: "coin", amount: 200 }],
+    targetValue: 20000,
+    currentValue: 1200,
   },
   {
-    id: "d3",
-    title: "일일 미션 3: 건강한 식단 기록",
-    description: "오늘 먹은 건강한 식단을 사진으로 기록하세요.",
+    id: "weekly_2",
+    title: "펫 레벨 올리기",
+    description: "펫의 레벨을 올려보세요.",
+    type: "weekly",
+    status: "pending",
+    rewards: [{ type: "experience", amount: 100 }],
+  },
+  {
+    id: "weekly_3",
+    title: "상점에서 아이템 3개 구매",
+    description: "상점에서 아이템을 3개 구매하세요.",
+    type: "weekly",
+    status: "pending",
+    rewards: [{ type: "coin", amount: 150 }],
+    targetValue: 3,
+    currentValue: 0,
+  },
+
+  // --- Completed (3) ---
+  {
+    id: "completed_1",
+    title: "매일 접속하기",
+    description: "어플에 접속을 해주세요.",
     type: "daily",
     status: "completed",
-    rewards: [{ type: "coin", amount: 5 }],
-    targetValue: 1,
-    currentValue: 1,
-    iconUrl: "https://via.placeholder.com/50/D0FFD0/000000?Text=D3",
+    rewards: [{ type: "coin", amount: 20 }],
   },
   {
-    id: "w2",
-    title: "주간 미션 2: 새로운 장소 탐험하기",
-    description: "이번 주에 한 번도 가보지 않은 새로운 장소를 방문해보세요.",
+    id: "completed_2",
+    title: "첫 펫 생성",
+    description: "나만의 첫 펫을 만들었습니다.",
     type: "weekly",
-    status: "failed",
-    rewards: [{ type: "experience", amount: 200 }],
-    iconUrl: "https://via.placeholder.com/50/FFD0A0/000000?Text=W2",
+    status: "completed",
+    rewards: [{ type: "experience", amount: 100 }],
+  },
+  {
+    id: "completed_3",
+    title: "첫 상점 방문",
+    description: "상점을 방문했습니다.",
+    type: "weekly",
+    status: "completed",
+    rewards: [{ type: "coin", amount: 20 }],
   },
 ];
 
-const fetchMissions = async (filter: MissionFilter): Promise<BaseMission[]> => {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      if (filter === "all") {
-        resolve(MOCK_ALL_MISSIONS);
-      } else if (filter === "daily") {
-        resolve(MOCK_ALL_MISSIONS.filter((m) => m.type === "daily"));
-      } else if (filter === "weekly") {
-        resolve(MOCK_ALL_MISSIONS.filter((m) => m.type === "weekly"));
-      } else if (filter === "completed") {
-        resolve(MOCK_ALL_MISSIONS.filter((m) => m.status === "completed"));
-      } else {
-        resolve([]);
-      }
-    }, 300);
-  });
-};
+/* ---------------------------------------------
+ * UI용 탭
+ * -------------------------------------------*/
 
-const claimMissionRewardAPI = async (
-  missionId: string
-): Promise<{ success: boolean; updatedMission?: Mission; error?: string }> => {
-  console.log(`Claiming reward for mission: ${missionId}`);
-  return new Promise((resolve) =>
-    setTimeout(() => {
-      // 모킹: 해당 미션 상태를 'completed'로 변경하고 반환
-      const allMissions = [...MOCK_DAILY_MISSIONS, ...MOCK_WEEKLY_MISSIONS];
-      const missionToUpdate = allMissions.find((m) => m.id === missionId);
-      if (missionToUpdate && missionToUpdate.status === "achieved") {
-        const updated = {
-          ...missionToUpdate,
-          status: "completed" as MissionStatus,
-        };
-        // 실제라면 MOCK_DAILY_MISSIONS 또는 MOCK_WEEKLY_MISSIONS 배열도 업데이트
-        resolve({ success: true, updatedMission: updated });
-      } else {
-        resolve({ success: false, error: "보상을 수령할 수 없는 미션입니다." });
-      }
-    }, 700)
-  );
-};
-// --- End Mock Data & Service ---
-
-const TABS: { label: string; value: MissionFilter }[] = [
+const TABS = [
   { label: "전체", value: "all" },
   { label: "일일 미션", value: "daily" },
   { label: "주간 미션", value: "weekly" },
   { label: "완료된 미션", value: "completed" },
 ];
 
-/**
- * 미션 목록 화면입니다.
- * 사용자는 일일 미션과 주간 미션을 탭으로 전환하여 볼 수 있으며,
- * 각 미션의 진행 상황을 확인하고 완료된 미션의 보상을 수령할 수 있습니다.
- */
+/* ---------------------------------------------
+ * 화면 컴포넌트
+ * -------------------------------------------*/
+
 export default function MissionsScreen() {
+  const router = useRouter();
   const [currentFilter, setCurrentFilter] = useState<MissionFilter>("all");
-  const [missions, setMissions] = useState<BaseMission[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
 
-  const loadMissions = useCallback(async (filter: MissionFilter) => {
-    setIsLoading(true);
-    try {
-      const fetchedMissions = await fetchMissions(filter);
-      setMissions(fetchedMissions);
-    } catch (error) {
-      console.error("Failed to load missions:", error);
-      Alert.alert("오류", "미션 목록을 불러오는 데 실패했습니다.");
-    } finally {
-      setIsLoading(false);
+  // 화면에서 보여줄 미션 필터링
+  const visibleMissions = useMemo(() => {
+    switch (currentFilter) {
+      case "daily":
+        return MOCK_MISSIONS.filter((m) => m.type === "daily");
+      case "weekly":
+        return MOCK_MISSIONS.filter((m) => m.type === "weekly");
+      case "completed":
+        return MOCK_MISSIONS.filter((m) => m.status === "completed");
+      default:
+        return MOCK_MISSIONS;
     }
-  }, []);
-
-  const handleFilterChange = (value: string) => {
-    const newFilter = value as MissionFilter;
-    setCurrentFilter(newFilter);
-    loadMissions(newFilter);
-  };
-
-  const handleMissionAction = (
-    missionId: string,
-    action?: "claim" | "details"
-  ) => {
-    const mission = missions.find((m) => m.id === missionId);
-    if (!mission) return;
-
-    if (action === "claim") {
-      Alert.alert(
-        "보상 수령!",
-        `${mission.title} 미션의 보상을 수령합니다. (구현 필요)`
-      );
-      // TODO: 실제 보상 수령 로직 호출 및 상태 업데이트
-      // 예: MOCK_ALL_MISSIONS에서 해당 미션 상태 변경 후 loadMissions(currentFilter) 재호출
-    } else {
-      // "details" 또는 undefined
-      Alert.alert(
-        "미션 상세",
-        `${mission.title} 미션의 상세 정보를 표시합니다. (구현 필요)`
-      );
-      // TODO: 미션 상세 화면으로 이동 또는 모달 표시
-    }
-  };
-
-  useEffect(() => {
-    loadMissions(currentFilter);
   }, [currentFilter]);
 
+  const handleMissionAction = (id: string) => {
+    router.push(`/(protected)/missions/${id}`);
+  };
+
   return (
-    <ScreenContainer padded={"horizontal"}>
-      <XStack p="$lg" jc="space-between" ai="center" pb="$md">
+    <ScreenContainer scrollable={false} padded="horizontal">
+      <XStack p="$lg" jc="space-between" ai="center">
         <Text type="h2">미션 목록</Text>
       </XStack>
 
       <SegmentedTabs
         tabs={TABS}
         currentTab={currentFilter}
-        onTabChange={handleFilterChange}
+        onTabChange={(v) => setCurrentFilter(v as MissionFilter)}
       />
 
       <MissionList
-        missions={missions}
-        isLoading={isLoading}
+        missions={visibleMissions}
+        isLoading={false}
         onMissionAction={handleMissionAction}
-        emptyListText={
-          currentFilter === "completed"
-            ? "완료한 미션이 아직 없어요!"
-            : "해당 조건의 미션이 없습니다."
-        }
+        emptyListText="해당 조건의 미션이 없습니다."
       />
     </ScreenContainer>
   );

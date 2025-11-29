@@ -21,9 +21,10 @@ export const GlobalLoadingStore = createStore<
     ...initialState,
 
     setIsLoading: (value) =>
-      set((state) => {
-        state.isLoading = value;
-      }),
+      set((state) => ({
+        ...state,
+        isLoading: value,
+      })),
   }))
 );
 

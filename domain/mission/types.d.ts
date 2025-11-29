@@ -25,7 +25,7 @@ export type MissionReward = {
 };
 
 /**
- * 개별 미션 정보를 나타내는 타입입니다.
+ * 개별 미션 정보를 나타내는 기본 타입입니다.
  */
 export interface BaseMission {
   id: string; // 미션의 고유 ID
@@ -43,7 +43,7 @@ export interface BaseMission {
 }
 
 /**
- * 홈 화면이나 간단한 목록에 표시될 미션 미리보기 정보입니다.
+ * 홈/리스트용 미리보기 정보
  */
 export interface MissionPreview {
   id: string;
@@ -53,9 +53,23 @@ export interface MissionPreview {
   iconUrl?: string;
   /** 미션 타입에 따른 추가 정보 (예: 일일 미션, 주간 미션) */
   typeText?: string;
-  /** 사용자가 이 미션을 탭했을 때 수행할 액션 (예: 미션 상세 페이지로 이동) */
-  actionRequired?: boolean; // 즉각적인 사용자 액션(클릭)이 필요한지 여부 (예: 보상받기)
+  /** 보상 받기 등 즉각 액션 필요 여부 */
+  actionRequired?: boolean;
 }
 
-// 예시: 미션 목록 필터링을 위한 타입
+/**
+ * UI에서 자주 쓰는 확장형 미션 모델
+ * - 서버/도메인 BaseMission을 확장해 화면단에서 쓰는 부가 필드 포함
+ */
+export interface Mission extends BaseMission {
+  /** 정량 목표 */
+  goal?: number;
+  /** 진행도(정량) */
+  currentProgress?: number;
+  /** 단위: "보", "회" 등 */
+  unit?: string;
+  /** 간단 보상(코인만) 표현이 필요할 때 */
+  rewardCoin?: number;
+}
+
 export type MissionFilter = "all" | "daily" | "weekly" | "completed";
