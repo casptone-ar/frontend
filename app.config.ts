@@ -144,6 +144,20 @@ const EXPO_TRACKING_TRANSPARENCY_PLUGIN: Plugin = [
   },
 ];
 
+const VIRO_REACT_PLUGIN: Plugin = [
+  "@reactvision/react-viro",
+  {
+    ios: {
+      cameraUsagePermission: "Neopets uses your camera for AR experiences.",
+      microphoneUsagePermission:
+        "Neopets uses your microphone for AR experiences.",
+      photosPermission: "Neopets would like to read photos for AR experiences.",
+      savephotosPermission:
+        "Neopets would like to save photos to your library during AR experiences.",
+    },
+  },
+];
+
 export default ({ config }: ConfigContext): ExpoConfig => {
   // 현재 환경 설정 (기본값: development)
   const appVariant = process.env.APP_VARIANT || "development";
@@ -194,6 +208,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       EXPO_MEDIA_LIBRARY_PLUGIN,
       EXPO_IMAGE_PICKER_PLUGIN,
       EXPO_TRACKING_TRANSPARENCY_PLUGIN,
+      VIRO_REACT_PLUGIN,
     ],
     extra: {
       APP_VARIANT: environment,
