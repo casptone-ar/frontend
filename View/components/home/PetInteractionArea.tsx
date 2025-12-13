@@ -29,10 +29,6 @@ export const PetInteractionArea = ({
   isLoading,
   onPetInteract,
 }: PetInteractionAreaProps) => {
-  const handleGoToAR = () => {
-    router.push("/(protected)/ar");
-  };
-
   if (isLoading) {
     return (
       <YStack f={1} jc="center" ai="center" mih={250} gap="$md">
@@ -65,7 +61,7 @@ export const PetInteractionArea = ({
       <Image
         source={{ uri: petStatus.imageUrl }}
         width={imageWidth}
-        height={imageHeight}
+        height={imageHeight + 40}
         objectFit="cover" // 이미지가 잘리지 않고 비율 유지
         bg={"$background3"}
         br="$lg" // borderRadius
@@ -91,10 +87,10 @@ export const PetInteractionArea = ({
   );
 
   return (
-    <YStack f={1} jc="space-around" ai="center" py="$md">
+    <YStack f={1} jc="space-around" ai="center" aspectRatio={1}>
       <YStack ai="center" gap="$sm">
         {petDisplay}
-        <Text type="h3" fontWeight="$bold" mt={"$sm"}>
+        <Text type="h3" fontWeight="$semibold" mt={"$sm"}>
           {petStatus.name}
         </Text>
       </YStack>

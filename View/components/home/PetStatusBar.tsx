@@ -26,10 +26,11 @@ export const PetStatusBar = ({
       <YStack // isLoading 시에도 전체적인 YStack 구조 유지
         space="$md"
         p="$md"
-        borderRadius="$lg"
+        borderRadius="$xxl"
         backgroundColor="$background2"
         borderWidth={1}
         borderColor="$border1"
+        borderCurve="continuous"
       >
         <Text type="h2" fontWeight="$bold" textAlign="center" mb="$sm">
           ...
@@ -56,47 +57,48 @@ export const PetStatusBar = ({
       : 0;
 
   return (
-    <YStack gap="$md" py="$md">
+    <YStack gap="$md" py="$xl">
       <XStack
         flexWrap="wrap"
         jc="space-between"
         ai="flex-start"
         bg={"$color1"}
         p={"$md"}
-        borderRadius={"$lg"}
+        borderRadius={"$xxl"}
+        borderCurve="continuous"
         shadowOffset={{ width: 0, height: 2 }}
         shadowOpacity={0.1}
         shadowRadius={4}
       >
         <YStack ai="center" gap="$xxs" flexBasis="33%" mb="$md">
+          <Text type="bodyLarge" fos={24} fontWeight="$semibold">
+            {stats.level}
+          </Text>
           <Text type="bodySmall" colorVariant="tertiary">
             레벨
-          </Text>
-          <Text type="bodyLarge" fos={20} fontWeight="$semibold">
-            {stats.level}
           </Text>
         </YStack>
 
         <YStack ai="center" gap="$xxs" flexBasis="33%" mb="$md">
+          <Text type="bodyLarge" fos={24} fontWeight="$semibold">
+            {stats.health}
+            {/* TODO: 아이콘이나 간단한 바로 표시 고려 (예: Heart icon) */}
+          </Text>
           <Text type="bodySmall" colorVariant="tertiary">
             건강
           </Text>
           {/* 건강은 수치 또는 아이콘/바로 표현 가능 */}
-          <Text type="bodyLarge" fos={20} fontWeight="$semibold">
-            {stats.health}
-            {/* TODO: 아이콘이나 간단한 바로 표시 고려 (예: Heart icon) */}
-          </Text>
         </YStack>
 
         <YStack ai="center" gap="$xxs" flexBasis="33%" mb="$md">
+          <Text type="bodyLarge" fos={24} fontWeight="$semibold">
+            {stats.happiness}
+            {/* TODO: 아이콘이나 간단한 바로 표시 고려 (예: Smile icon) */}
+          </Text>
           <Text type="bodySmall" colorVariant="tertiary">
             행복도
           </Text>
           {/* 행복도도 수치 또는 아이콘/바로 표현 가능 */}
-          <Text type="bodyLarge" fos={20} fontWeight="$semibold">
-            {stats.happiness}
-            {/* TODO: 아이콘이나 간단한 바로 표시 고려 (예: Smile icon) */}
-          </Text>
         </YStack>
 
         <YStack ai="center" gap="$xxs" flexBasis="100%" miw={120} pt={"$sm"}>
@@ -106,7 +108,7 @@ export const PetStatusBar = ({
             w="100%"
             backgroundColor="$color5"
           >
-            <Progress.Indicator animation="medium" backgroundColor="$accent1" />
+            <Progress.Indicator animation="medium" backgroundColor="$color11" />
           </Progress>
           <Text type="caption" colorVariant="tertiary" fontWeight="$medium">
             {stats.experience} / {experienceToNextLevel} EXP

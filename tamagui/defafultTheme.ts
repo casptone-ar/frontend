@@ -1,24 +1,24 @@
 // Figma Color Palette (New - Light Theme Based on Image)
 const lightColors = {
   // Grays / Neutrals (from Typography Light & Dividers)
-  gray1: "#FFFFFF", // Pure White (Background, High Emphasis Text on Dark)
-  gray2: "#F9F9FB", // Very Light Gray (Subtle Backgrounds, Low Emphasis Primary BG)
-  gray3: "#F1F1F5", // Light Gray (Medium Emphasis Primary BG, Dividers on Dark)
-  gray4: "#E8E8EE", // Slightly Darker Light Gray (High Emphasis Primary BG)
-  gray5: "#D9D9E0", // Medium Light Gray (Label BG, Disabled BG)
-  gray6: "#C8C8D1", // Medium Gray (Low Emphasis Text)
-  gray7: "#B0B0BB", // Darker Medium Gray (Medium Emphasis Text)
-  gray8: "#8A8A99", // Dark Gray (Disabled Text)
-  gray9: "#5B5B66", // Very Dark Gray (High Emphasis Text on Light)
-  gray10: "#3C3C43", // Near Black (Alternative High Emphasis)
-  gray11: "#1C1C1E", // True Black (Text on Dark BG)
+  gray1: "#030508",
+  gray2: "#0d1115",
+  gray3: "#202428",
+  gray4: "#393d42",
+  gray5: "#5a5e63",
+  gray6: "#7f848a",
+  gray7: "#a1a6ab",
+  gray8: "#bdc3c9",
+  gray9: "#d5dae0",
+  gray10: "#e7edf3",
+  gray11: "#f4f9fe",
 
   // Primary Colors (from "Primary" section - Blue/Purple)
-  primaryOnClick: "#3A3AFF", // On-click button
-  primaryDefault: "#575AFF", // Default
-  primaryHigh: "#8C8CFF", // High emphasis
-  primaryMedium: "#C0C0FF", // Medium emphasis
-  primaryLow: "#F0F0FF", // Low emphasis
+  primaryOnClick: "#61fb7a", // On-click button
+  primaryDefault: "#61fb7a", // Default
+  primaryHigh: "#61fb7a", // High emphasis
+  primaryMedium: "#61fb7a", // Medium emphasis
+  primaryLow: "#61fb7a", // Low emphasis
 
   // Semantic Colors (from Palette)
   red500: "#FF453A", // Red (Error) - Mapped from image Red 500

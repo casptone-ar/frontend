@@ -200,7 +200,7 @@ export const Chip = React.forwardRef<TamaguiElement, ChipProps>(
       >
         {leftElement}
         {text && (
-          <ChipText size={size} color={finalTextColor}>
+          <ChipText size={size} color={finalTextColor} fontWeight="$semibold">
             {text}
           </ChipText>
         )}

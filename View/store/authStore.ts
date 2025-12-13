@@ -1,7 +1,6 @@
 // View/store/authStore.ts
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { create } from "zustand";
-import * as SecureStore from "expo-secure-store";
 
 // 🔹 실제 API 연동은 잠깐 비활성화 (백엔드 붙일 때 다시 사용)
 // import {
@@ -71,7 +70,7 @@ export const authStore = create<AuthState>((set, get) => ({
         nickname: email.split("@")[0] ?? "User",
       } as unknown as User;
 
-      await SecureStore.setItemAsync("accessToken", fakeAccessToken);
+      // await SecureStore.setItemAsync("accessToken", fakeAccessToken);
       await AsyncStorage.setItem("token", fakeAccessToken);
 
       set({
@@ -101,7 +100,7 @@ export const authStore = create<AuthState>((set, get) => ({
         nickname,
       } as unknown as User;
 
-      await SecureStore.setItemAsync("accessToken", fakeAccessToken);
+      // await SecureStore.setItemAsync("accessToken", fakeAccessToken);
       await AsyncStorage.setItem("token", fakeAccessToken);
 
       set({
@@ -121,8 +120,8 @@ export const authStore = create<AuthState>((set, get) => ({
    * 🚪 로그아웃: 저장소 정리 후 상태 초기화
    */
   logout: async () => {
-    await SecureStore.deleteItemAsync("accessToken");
-    await SecureStore.deleteItemAsync("refreshToken");
+    // await SecureStore.deleteItemAsync("accessToken");
+    // await SecureStore.deleteItemAsync("refreshToken");
     await AsyncStorage.removeItem("token");
     set({ user: null, accessToken: null, refreshToken: null });
   },

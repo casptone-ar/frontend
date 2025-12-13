@@ -17,8 +17,8 @@ const TabsRovingIndicator = ({
   return (
     <YStack
       position="absolute"
-      backgroundColor="$color5"
-      opacity={0.7}
+      backgroundColor="transparent"
+      opacity={0.8}
       animation="medium"
       enterStyle={{
         opacity: 0,
@@ -27,8 +27,8 @@ const TabsRovingIndicator = ({
         opacity: 0,
       }}
       {...(active && {
-        backgroundColor: "$accent5", // Use a theme variable or a specific color
-        opacity: 1, // Active indicator more visible
+        backgroundColor: "$accent1",
+        opacity: 1,
       })}
       {...props}
     />
@@ -94,16 +94,17 @@ export const SegmentedTabs = ({
       w={"100%"}
       h={56}
       activationMode={activationMode}
-      backgroundColor="$backgroundTransparent" // More like a segmented control
-      borderRadius="$md" // More rounded
+      backgroundColor="color1"
+      borderRadius="$xl"
+      borderColor="$color3"
       position="relative"
-      padding="$1" // Padding around the list
+      padding="$2"
     >
       <YStack flex={1}>
         <AnimatePresence>
           {tabState.intentAt && (
             <TabsRovingIndicator
-              borderRadius="$5" // Slightly less than parent for inset feel
+              borderRadius="$circular"
               width={tabState.intentAt.width}
               height={tabState.intentAt.height}
               x={tabState.intentAt.x}
@@ -115,9 +116,9 @@ export const SegmentedTabs = ({
         <AnimatePresence exitBeforeEnter>
           {tabState.activeAt && (
             <TabsRovingIndicator
-              theme="base" // Use a theme like 'active' or 'accent'
-              backgroundColor="$accent1"
-              borderRadius="$lg"
+              theme="base"
+              borderRadius="$circular"
+              backgroundColor="$color3"
               width={tabState.activeAt.width}
               height={tabState.activeAt.height}
               x={tabState.activeAt.x}
@@ -130,29 +131,38 @@ export const SegmentedTabs = ({
           flex={1}
           disablePassBorderRadius
           loop={false}
-          gap="$1.5" // Gap between tabs
-          backgroundColor="$background2"
-          padding="$2" // Padding inside the list if indicator is inset
+          gap="$2"
+          // backgroundColor="$background3"
+          borderRadius="$xxl"
+          padding="$2"
         >
-          {tabs.map((tab) => (
-            <Tabs.Tab
-              unstyled // Use unstyled and apply custom styling
-              key={tab.value}
-              value={tab.value}
-              onInteraction={handleOnInteraction}
-              paddingVertical="$2" // Adjust padding as needed
-              paddingHorizontal="$3"
-              flex={1} // Flex to take equal width
-              flexShrink={0}
-              ai="center"
-              jc="center"
-              bg={"transparent"}
-            >
-              <Text type="body" fow={"$semibold"}>
-                {tab.label}
-              </Text>
-            </Tabs.Tab>
-          ))}
+          {tabs.map((tab) => {
+            const isActive = currentTab === tab.value;
+
+            return (
+              <Tabs.Tab
+                unstyled
+                key={tab.value}
+                value={tab.value}
+                onInteraction={handleOnInteraction}
+                paddingVertical="$2"
+                paddingHorizontal="$3"
+                flex={1}
+                flexShrink={0}
+                ai="center"
+                jc="center"
+                bg="transparent"
+              >
+                <Text
+                  type="body"
+                  fow="$semibold"
+                  color={isActive ? "$accent1" : "$text3"}
+                >
+                  {tab.label}
+                </Text>
+              </Tabs.Tab>
+            );
+          })}
         </Tabs.List>
       </YStack>
       {/* Content area is usually handled by the parent screen based on currentTab */}

@@ -51,8 +51,19 @@ export const MissionList = ({
     return (
       <YStack f={1} ai="center" jc="center" p="$lg" space="$md" mih={200}>
         {ListHeaderComponent}
-        <Card p="$xl" ai="center" gap="$sm">
-          <Text type="h3">😕</Text>
+        <Card
+          bg="$background2"
+          borderCurve="continuous"
+          br="$xxl"
+          bw={0}
+          shop={0}
+          p="$lg"
+          ai="center"
+          gap="$sm"
+        >
+          <Text type="h3" colorVariant="secondary">
+            -
+          </Text>
           <Text type="body" colorVariant="secondary" ta="center">
             {emptyListText}
           </Text>
@@ -68,6 +79,7 @@ export const MissionList = ({
       renderItem={renderItem}
       keyExtractor={(item) => item.id}
       ListHeaderComponent={ListHeaderComponent}
+      style={{ flex: 1 }}
       ItemSeparatorComponent={() => <YStack h="$md" />}
       contentContainerStyle={
         contentContainerStyle ?? {

@@ -1,219 +1,259 @@
 // app/(protected)/home.tsx
-import { useFocusEffect, useRouter } from "expo-router";
-import { useCallback, useEffect, useState } from "react";
-import { Alert, Platform } from "react-native";
-import { Paragraph, Spinner, XStack, YStack } from "tamagui";
+import { useMemo, useRef, useState } from "react";
+import { useRouter } from "expo-router";
+import { Platform } from "react-native";
+import MapView, { Marker, type Region } from "react-native-maps";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
+import BottomSheet, {
+  BottomSheetBackdrop,
+  BottomSheetFlatList,
+} from "@gorhom/bottom-sheet";
+import { ListChecks, MapPin, Navigation } from "@tamagui/lucide-icons";
+import { Button as TamaguiButton, XStack, YStack } from "tamagui";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { Button } from "@/View/core/Button/Button";
+import { Card } from "@/View/core/Card/Card";
+import { Header } from "@/View/core/Header/Header";
 import { ScreenContainer } from "@/View/core/ScreenContainer/ScreenContainer";
 import { Text } from "@/View/core/Text/Text";
-import { Settings } from "@tamagui/lucide-icons";
+import { MissionItem } from "@/View/components/missions/MissionItem";
+import { useMissionStore } from "@/View/store/missionStore";
 
-import { MissionPreviewList } from "@/View/components/home/MissionPreviewList";
-import { PetInteractionArea } from "@/View/components/home/PetInteractionArea";
-import { PetStatusBar } from "@/View/components/home/PetStatusBar";
-
-import type { MissionPreview as UiMissionPreview } from "@/domain/mission/types";
-import type { CurrentPetStatus, PetStats } from "@/domain/pet/types";
-
-// ✅ 헬스 스토어
-import { useHealth } from "@/View/store/healthStore";
-
-// ✅ 홈 화면용 목 데이터
-const MOCK_PET_STATUS: CurrentPetStatus = {
-  id: "1",
-  name: "네오",
-  level: 1,
-  experience: 0,
-  experienceToNextLevel: 200,
-  imageUrl: require("@/assets/pets/cat.png"),
+const MAP_INITIAL_REGION: Region = {
+  latitude: 37.634863,
+  longitude: 126.832149,
+  latitudeDelta: 0.01,
+  longitudeDelta: 0.01,
 };
-
-const MOCK_PET_STATS: PetStats = {
-  level: 1,
-  experience: 120,
-  health: 80,
-  happiness: 90,
-};
-
-const MOCK_MISSIONS: UiMissionPreview[] = [
-  {
-    id: "mission_1",
-    title: "오늘 3,000보 걷기",
-    statusText: "1,500 / 3,000보 진행 중",
-    typeText: "일일 미션",
-    actionRequired: false,
-    // iconUrl: "https://..."  // 필요하면 나중에 추가
-  },
-  {
-    id: "mission_2",
-    title: "상점에서 아이템 하나 사기",
-    statusText: "잠금 상태",
-    typeText: "주간 미션",
-    actionRequired: false,
-  },
-];
 
 export default function HomeScreen() {
   const router = useRouter();
+  const bottomSheetRef = useRef<BottomSheet>(null);
+  const insets = useSafeAreaInsets();
 
-  const [petStatus, setPetStatus] = useState<CurrentPetStatus | null>(
-    MOCK_PET_STATUS
-  );
-  const [petStats, setPetStats] = useState<PetStats>(MOCK_PET_STATS);
-  const [missionPreviews, setMissionPreviews] =
-    useState<UiMissionPreview[]>(MOCK_MISSIONS);
-  const [isLoading, setIsLoading] = useState(false);
-  const [isLoadingMissions, setIsLoadingMissions] = useState(false);
+  const { spots, getSpotById, getMissionsBySpotId } = useMissionStore();
 
-  // ✅ 헬스 스토어에서 필요한 상태와 동기화 함수 가져오기
-  const {
-    todaySteps,
-    isLoading: healthLoading,
-    error: healthError,
-    refreshToday,
-    syncSteps,
-  } = useHealth();
+  const [selectedSpotId, setSelectedSpotId] = useState<string | null>(null);
+  const [sheetIndex, setSheetIndex] = useState<number>(-1);
 
-  const loadHomeScreenData = useCallback(async () => {
-    setIsLoading(true);
-    setIsLoadingMissions(true);
-    try {
-      // 여기서는 그냥 목 데이터 다시 세팅만 해줌
-      await new Promise((r) => setTimeout(r, 400));
-      setPetStatus(MOCK_PET_STATUS);
-      setPetStats(MOCK_PET_STATS);
-      setMissionPreviews(MOCK_MISSIONS);
-    } catch (error) {
-      console.error("Failed to load home screen data (mock):", error);
-      Alert.alert("오류", "홈 화면 데이터를 불러오는 데 실패했습니다.");
-    } finally {
-      setIsLoading(false);
-      setIsLoadingMissions(false);
-    }
-  }, []);
+  const snapPoints = useMemo(() => ["44%", "62%"], []);
 
-  // ✅ 화면 진입 시: 데이터 + 걸음 동기화
-  useFocusEffect(
-    useCallback(() => {
-      (async () => {
-        await loadHomeScreenData();
-        await refreshToday();
-        await syncSteps();
-      })();
+  const selectedSpot = useMemo(() => {
+    if (!selectedSpotId) return undefined;
+    return getSpotById(selectedSpotId);
+  }, [getSpotById, selectedSpotId]);
 
-      return () => {};
-    }, [loadHomeScreenData, refreshToday, syncSteps])
-  );
+  const spotMissions = useMemo(() => {
+    if (!selectedSpotId) return [];
+    return getMissionsBySpotId(selectedSpotId);
+  }, [getMissionsBySpotId, selectedSpotId]);
 
-  // ✅ 첫 마운트 시에도 1회 실행
-  useEffect(() => {
-    (async () => {
-      await refreshToday();
-      await syncSteps();
-    })();
-  }, [refreshToday, syncSteps]);
+  const openSpotSheet = (spotId: string) => {
+    setSelectedSpotId(spotId);
+    setSheetIndex(0);
+    requestAnimationFrame(() => bottomSheetRef.current?.snapToIndex(0));
+  };
 
-  const handlePetInteraction = () => {
-    Alert.alert("야옹!", "애완동물이 당신을 바라봅니다.");
+  const closeSpotSheet = () => {
+    setSheetIndex(-1);
+    requestAnimationFrame(() => bottomSheetRef.current?.close());
   };
 
   const handleNavigateToMissions = () => {
+    closeSpotSheet();
     router.push("/(protected)/missions");
   };
 
-  const handleMissionPreviewPress = (missionId: string) => {
-    Alert.alert("미션 선택됨", `미션 ID: ${missionId} (상세보기 구현 필요)`);
+  const handleSelectMission = (missionId: string) => {
+    closeSpotSheet();
+    router.push(`/(protected)/missions/${missionId}`);
   };
 
-  if (isLoading && !petStatus && missionPreviews.length === 0) {
-    return (
-      <ScreenContainer scrollable={false} safeAreaTop={false}>
-        <YStack f={1} jc="center" ai="center" space>
-          <Spinner size="large" color="$accent1" />
-          <Paragraph color="$text2">데이터를 불러오는 중...</Paragraph>
-        </YStack>
-      </ScreenContainer>
-    );
-  }
-
-  const petName = petStatus?.name ?? "애완동물";
-  const expToNextLevel = petStatus?.experienceToNextLevel ?? 100;
-
   return (
-    <ScreenContainer scrollable safeAreaTop={false}>
-      <YStack space="$md" p="$lg">
-        <XStack py={"$xl"} px={0} jc="space-between" ai="center" pb={"$sm"}>
-          <Text type="h2">Home</Text>
-          <Button
-            boc={"$border1"}
-            bg={"transparent"}
-            color={"$text1"}
-            px={"$3"}
-            iconAfter={<Settings size={24} color="$text2" />}
-            onPress={() => router.push("/(protected)/settings")}
-          />
-        </XStack>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <ScreenContainer
+        scrollable={false}
+        safeAreaTop={false}
+        safeAreaBottom={false}
+      >
+        {/* ✅ 지도는 화면 전체(네비게이션 바 영역 제외된 컨텐츠 영역)를 꽉 채우도록 배경으로 깔기 */}
+        <MapView
+          userInterfaceStyle="dark"
+          style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }}
+          initialRegion={MAP_INITIAL_REGION}
+          mapType={Platform.OS === "ios" ? "mutedStandard" : "standard"}
+          showsCompass={false}
+          toolbarEnabled={false}
+        >
+          {spots.map((spot) => (
+            <Marker
+              key={spot.id}
+              coordinate={{
+                latitude: spot.latitude,
+                longitude: spot.longitude,
+              }}
+              title={spot.title}
+              description={spot.subtitle}
+              pinColor={"#111111"}
+              onPress={() => openSpotSheet(spot.id)}
+            />
+          ))}
+        </MapView>
 
-        <PetInteractionArea
-          petStatus={petStatus}
-          isLoading={!petStatus && isLoading}
-          onPetInteract={handlePetInteraction}
-        />
+        {/* ✅ 상단 UI 오버레이 (absolute top) */}
+        <YStack
+          position="absolute"
+          top={0}
+          left={0}
+          right={0}
+          paddingTop={insets.top}
+          px="$md"
+          gap="$sm"
+        >
+          <Card
+            bg="$background2"
+            borderCurve="continuous"
+            br="$xxl"
+            boxShadow={"0px 0px 24px 0px rgba(0, 0, 0, 0.3)"}
+            p="$md"
+            gap="$sm"
+            opacity={0.95}
+          >
+            <XStack jc="space-between" ai="center">
+              <XStack ai="center" gap="$sm">
+                <YStack
+                  width={36}
+                  height={36}
+                  borderRadius="$circular"
+                  bg="$background3"
+                  ai="center"
+                  jc="center"
+                >
+                  <MapPin size={18} color="$accent1" />
+                </YStack>
+                <YStack>
+                  <Text type="body" fontWeight="$semibold">
+                    화정역 주변 스팟
+                  </Text>
+                  <Text type="caption" colorVariant="secondary">
+                    마커를 눌러 스팟 미션을 확인하세요 (Mock)
+                  </Text>
+                </YStack>
+              </XStack>
 
-        <PetStatusBar
-          name={petName}
-          stats={petStats}
-          experienceToNextLevel={expToNextLevel}
-          isLoading={!petStatus && isLoading}
-        />
-
-        {/* ✅ 오늘의 걸음수 카드 */}
-        {Platform.OS === "ios" && (
-          <YStack gap="$xs" bg="$color3" p="$md" borderRadius="$md">
-            <Text type="bodyLarge">오늘의 걸음수</Text>
-            {healthError ? (
-              <Text type="bodySmall" colorVariant="error">
-                건강 데이터 권한이 필요합니다. 설정에서 허용해주세요.
-              </Text>
-            ) : (
-              <Text type="bodySmall" colorVariant="secondary">
-                {healthLoading
-                  ? "로딩 중..."
-                  : `${todaySteps.toLocaleString()} 보`}
-              </Text>
-            )}
-            <XStack jc="flex-end">
-              <Button
-                size="sm"
-                variant="ghost"
-                onPress={async () => {
-                  await refreshToday();
-                  await syncSteps();
-                }}
-                disabled={healthLoading}
+              <YStack
+                width={36}
+                height={36}
+                borderRadius="$circular"
+                bg="$background3"
+                ai="center"
+                jc="center"
               >
-                새로고침
-              </Button>
+                <Navigation size={18} color="$accent1" />
+              </YStack>
             </XStack>
-          </YStack>
-        )}
+          </Card>
 
-        <MissionPreviewList
-          title="진행 중인 미션"
-          missions={missionPreviews}
-          isLoading={isLoadingMissions}
-          onViewAllPress={handleNavigateToMissions}
-          onMissionPress={handleMissionPreviewPress}
-        />
-
-        <YStack gap="$xs" bg={"$accent5"} p="$md" borderRadius="$md">
-          <Text type="bodyLarge">오늘의 팁!</Text>
-          <Text type="bodySmall" colorVariant="secondary">
-            꾸준한 걸음으로 애완동물과 함께 건강해지세요!
-          </Text>
+          <Header
+            transparent
+            title="탐험 지도"
+            leftAction={null}
+            rightAction={
+              <TamaguiButton
+                chromeless
+                circular
+                size="$6"
+                backgroundColor="$background3"
+                borderRadius="$circular"
+                boxShadow={"0px 0px 6px 0px rgba(0, 0, 0, 0.7)"}
+                pressStyle={{ backgroundColor: "$color4", opacity: 0.9 }}
+                onPress={handleNavigateToMissions}
+                icon={<ListChecks size={20} color="$text1" />}
+              />
+            }
+            borderBottom={false}
+            px={0}
+            py="$sm"
+          />
         </YStack>
-      </YStack>
-    </ScreenContainer>
+
+        <BottomSheet
+          ref={bottomSheetRef}
+          index={sheetIndex}
+          snapPoints={snapPoints}
+          enablePanDownToClose
+          onChange={(idx) => setSheetIndex(idx)}
+          backgroundStyle={{
+            backgroundColor: "#0d1115",
+            borderTopLeftRadius: 28,
+            borderTopRightRadius: 28,
+          }}
+          handleIndicatorStyle={{ backgroundColor: "#202428" }}
+          backdropComponent={(props) => (
+            <BottomSheetBackdrop
+              {...props}
+              disappearsOnIndex={-1}
+              appearsOnIndex={0}
+              opacity={0.35}
+            />
+          )}
+        >
+          <YStack pb="$md" gap="$sm" flex={1}>
+            <XStack jc="space-between" ai="center" p="$lg">
+              <YStack>
+                <Text type="h3">{selectedSpot?.title ?? "스팟"}</Text>
+                <Text type="caption" colorVariant="secondary" mt="$xs">
+                  {selectedSpot?.subtitle ?? "해당 스팟의 미션을 확인하세요."}
+                </Text>
+              </YStack>
+              <TamaguiButton
+                chromeless
+                size="$3"
+                backgroundColor="$background3"
+                borderRadius="$circular"
+                pressStyle={{ backgroundColor: "$color4", opacity: 0.9 }}
+                onPress={handleNavigateToMissions}
+              >
+                <Text type="caption" color="$accent1" fontWeight="$semibold">
+                  전체 미션
+                </Text>
+              </TamaguiButton>
+            </XStack>
+
+            <BottomSheetFlatList
+              data={spotMissions}
+              keyExtractor={(item) => item.id}
+              contentContainerStyle={{
+                paddingTop: 44,
+                paddingBottom: 144,
+                paddingHorizontal: 16,
+
+                backgroundColor: "#000000",
+              }}
+              ItemSeparatorComponent={() => <YStack h="$xxl" />}
+              renderItem={({ item }) => (
+                <MissionItem mission={item} onPress={handleSelectMission} />
+              )}
+              ListEmptyComponent={
+                <Card
+                  bg="$background2"
+                  bw={1}
+                  boc="$color4"
+                  br="$xxl"
+                  shop={0}
+                  p="$md"
+                  gap="$sm"
+                  ai="center"
+                >
+                  <Text type="body" colorVariant="secondary">
+                    이 스팟에는 아직 미션이 없어요.
+                  </Text>
+                </Card>
+              }
+            />
+          </YStack>
+        </BottomSheet>
+      </ScreenContainer>
+    </GestureHandlerRootView>
   );
 }

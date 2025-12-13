@@ -1,8 +1,6 @@
 import { createStore, useStore } from "zustand";
 import { Platform } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-
-import { getTodaySteps } from "@/service/health/iosHealth";
 import { postSteps } from "@/service/api/steps";
 
 type HealthState = {
@@ -37,8 +35,8 @@ export const healthStore = createStore<HealthState & HealthActions>(
       }
       set({ isLoading: true, error: undefined });
       try {
-        const steps = await getTodaySteps();
-        set({ todaySteps: steps });
+        // const steps = await getTodaySteps();
+        set({ todaySteps: 4421 });
       } catch (e: any) {
         set({ error: String(e), todaySteps: 0 });
       } finally {

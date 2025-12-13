@@ -92,7 +92,7 @@ const EXPO_CAMERA_PLUGIN: Plugin = [
 const EXPO_ASSETS_PLUGIN: Plugin = [
   "expo-asset",
   {
-    assets: ["./assets"],
+    assets: ["./assets", "./assets/res"],
   },
 ];
 
@@ -101,6 +101,7 @@ const BUILD_PROPERTIES_PLUGIN: Plugin = [
   {
     ios: {
       useFrameworks: "static",
+      forceStaticLinking: ["RNFBApp", "RNFBAnalytics"],
     },
   },
 ];
@@ -151,6 +152,10 @@ const VIRO_REACT_PLUGIN: Plugin = [
   },
 ];
 
+const MAP_PLUGIN: Plugin = ["react-native-maps"];
+
+const APPLE_AUTHENTICATION_PLUGIN: Plugin = ["expo-apple-authentication"];
+
 export default ({ config }: ConfigContext): ExpoConfig => {
   // 현재 환경 설정 (기본값: development)
   const appVariant = process.env.APP_VARIANT || "development";
@@ -180,6 +185,11 @@ export default ({ config }: ConfigContext): ExpoConfig => {
 
       // ✅ Apple 로그인 사용 (expo-apple-authentication 설치 시 권장)
       usesAppleSignIn: true,
+
+      // ✅ Apple 로그인 Entitlements 명시적 추가
+      entitlements: {
+        "com.apple.developer.applesignin": ["Default"],
+      },
 
       // ✅ HealthKit/암호화 관련 Info.plist 키 추가
       infoPlist: {
@@ -213,6 +223,8 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       EXPO_IMAGE_PICKER_PLUGIN,
       EXPO_TRACKING_TRANSPARENCY_PLUGIN,
       VIRO_REACT_PLUGIN,
+      APPLE_AUTHENTICATION_PLUGIN,
+      MAP_PLUGIN,
       // 참고: expo-apple-authentication은 별도 plugin 항목 불필요(패키지 설치만)
       // HealthKit 브리지는 react-native-health 사용(별도 plugin 없으면 prebuild 후 Xcode에서 Capabilities 확인)
     ],

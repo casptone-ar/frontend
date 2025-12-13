@@ -10,13 +10,13 @@ import type React from "react";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { XStack, styled } from "tamagui";
 import type { GetProps } from "tamagui";
-import { Button, YStack } from "tamagui";
+import { Button, YStack, Text } from "tamagui";
 
 const NavFrame = styled(XStack, {
   name: "BottomNavigationBar",
   jc: "space-around",
   ai: "center",
-  backgroundColor: "$background2", // 테마 배경색 (일반 배경보다 약간 다를 수 있음)
+  backgroundColor: "transparent", // 테마 배경색 (일반 배경보다 약간 다를 수 있음)
   borderTopWidth: 1,
   borderTopColor: "$border1", // 테마 경계선 색
   minHeight: "$size.6", // 토큰 사용
@@ -62,7 +62,7 @@ export const BottomNavigationBar = ({
   const tabsConfig = [
     { name: "home", label: "홈", Icon: Home },
     { name: "missions", label: "미션", Icon: ListChecks },
-    { name: "ar", label: "AR", Icon: Camera, isCenter: true }, // 가운데 AR 버튼
+    { name: "ar", label: "AR", Icon: PawPrint, isCenter: true }, // 가운데 AR 버튼
     { name: "shop", label: "상점", Icon: Store },
     { name: "collection", label: "동물농장", Icon: PawPrint },
   ];
@@ -72,13 +72,12 @@ export const BottomNavigationBar = ({
       jc="space-around"
       ai="flex-end" // 중앙 버튼이 위로 돌출되도록
       backgroundColor="$background1" // 테마 배경색
-      borderTopWidth={1}
-      borderTopColor="$border1" // 테마 경계선 색상
+      // borderTopWidth={1}
+      // borderTopColor="$border1" // 테마 경계선 색상
       paddingBottom={bottom} // 하단 안전 영역 적용
       position="relative" // AR 버튼의 absolute 포지셔닝 기준
       height={80} // 기본 높이 + 안전 영역
-      borderTopLeftRadius={"$xl"}
-      borderTopRightRadius={"$xl"}
+      boxShadow={"0 -4px 12px 0 rgba(0, 0, 0, 0.1)"}
     >
       {state.routes.map((route, index) => {
         const tabInfo = tabsConfig.find((t) => t.name === route.name);
@@ -130,11 +129,13 @@ export const BottomNavigationBar = ({
                 backgroundColor="$accent1" // 강조색
                 onPress={onPress}
                 onLongPress={onLongPress}
+                style={{
+                  boxShadow: "0 10px 32px 8px rgba(51, 77, 255, 0.5)",
+                }}
               >
                 <Icon color="$color1" />
               </Button>
               {/* AR 탭은 라벨을 버튼 아래에 작게 표시하거나 생략 가능 */}
-              {/* <Text fontSize="$1" color={labelColor} mt="$xxs">{label}</Text> */}
             </YStack>
           );
         }
@@ -142,13 +143,20 @@ export const BottomNavigationBar = ({
         // 일반 탭 아이템
         return (
           <Button
+            animation="medium"
             key={route.key}
             flex={1} // 공간 균등 배분
             onPress={onPress}
             onLongPress={onLongPress}
+            pressStyle={{
+              borderWidth: 0,
+            }}
             icon={
               <YStack ai="center" gap="$xxs" p="$xs">
                 <Icon color={iconColor} size={24} strokeWidth={2} />
+                <Text fontSize="$4" color={labelColor} mt="$xxs">
+                  {tabConfigLabel}
+                </Text>
               </YStack>
             }
             gap="$xs" // 아이콘과 라벨 사이 간격
