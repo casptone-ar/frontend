@@ -380,13 +380,15 @@ export const DrivingCarScene: React.FC<DrivingCarSceneProps> = (props) => {
     return (
       <ViroNode position={worldPosition} rotation={carState.rotation}>
         <ViroNode scale={[scale, scale, scale]}>
-          {/* 그림자 */}
+          {/* 그림자
           <ViroQuad
             width={5.691}
             height={5.691}
-            materials={["dropShadow"]}
+            materials={[
+              { uri: require("../../../../assets/res/car_shadow.png") },
+            ]}
             rotation={[-90, 0, 0]}
-          />
+          /> */}
 
           {/* 차체 (기울기 적용) */}
           <ViroNode rotation={[0, 0, carState.leanRotation]}>

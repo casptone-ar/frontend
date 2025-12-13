@@ -314,7 +314,6 @@ export default function ARScreen() {
                     </Text>
                   </XStack>
                 </Card>
-
                 <Card
                   bg="$background2"
                   borderCurve="continuous"
@@ -326,34 +325,11 @@ export default function ARScreen() {
                   opacity={0.9}
                 >
                   <Text type="caption" colorVariant="secondary">
-                    영상 청크 전송: {Math.min(videoChunkSent, videoChunkTotal)}/
-                    {videoChunkTotal}
+                    이미지 큐: {imageQueue}장 대기
                   </Text>
                 </Card>
               </YStack>
             </XStack>
-          </YStack>
-
-          <YStack
-            position="absolute"
-            left={12}
-            bottom={insets.bottom + 10}
-            pointerEvents="none"
-          >
-            <Card
-              bg="$background2"
-              borderCurve="continuous"
-              br="$xl"
-              bw={1}
-              boc="$color4"
-              shop={0}
-              p="$sm"
-              opacity={0.9}
-            >
-              <Text type="caption" colorVariant="secondary">
-                이미지 큐: {imageQueue}장 대기
-              </Text>
-            </Card>
           </YStack>
         </YStack>
       </ScreenContainer>
