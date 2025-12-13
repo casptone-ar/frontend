@@ -3,8 +3,8 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import { Alert } from "react-native";
 import { H1, Paragraph, Separator, Spinner, YStack } from "tamagui";
-import { AscensionSummary } from "./components/ascension/AscensionSummary";
-import { NextStepButtons } from "./components/ascension/NextStepButtons";
+import { AscensionSummary } from "@/View/components/ascension/AscensionSummary";
+import { NextStepButtons } from "@/View/components/ascension/NextStepButtons";
 
 // --- Mock Data & Service ---
 // 실제로는 이전 화면(예: 펫 상태 화면에서 승천 버튼 클릭)에서 API 호출 후

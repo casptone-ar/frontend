@@ -1,272 +1,464 @@
+import React from "react";
+import { Alert, Image } from "react-native";
+import { Paragraph, Separator, XStack, YStack } from "tamagui";
+
 import { ScreenContainer } from "@/View/core/ScreenContainer/ScreenContainer";
 import { Text } from "@/View/core/Text/Text";
-import type {
-  ConsumableShopItem,
-  CosmeticShopItem,
-  PoseShopItem,
-  ShopItem,
-  UserCoinBalance,
-} from "@/domain/shop/types";
-import { useFocusEffect } from "expo-router";
-import { useCallback, useState } from "react";
-import { Alert } from "react-native";
-import { Separator, Spinner, XStack, YStack } from "tamagui";
-import { CoinBalanceDisplay } from "./components/shop/CoinBalanceDisplay";
-import { ShopItemList } from "./components/shop/ShopItemList";
+import { Button } from "@/View/core/Button/Button";
+import { Chip } from "@/View/core/Chip/Chip";
 
-// --- Mock Data & Service ---
-// 실제로는 service/application 레이어에서 zustand 스토어 또는 react-query 훅을 통해 가져옵니다.
-const MOCK_COSMETIC_ITEMS: CosmeticShopItem[] = [
-  {
-    id: "cosmetic001",
-    name: "빨간 모자",
-    description: "멋진 빨간색 모자입니다. 펫에게 씌워주세요!",
-    price: 20,
-    category: "cosmetic",
-    iconUrl: "icons/red_hat.png", // 실제 아이콘 경로로 대체 필요
-  },
-  {
-    id: "cosmetic002",
-    name: "파란 스카프",
-    description: "시원한 파란색 스카프입니다.",
-    price: 15,
-    category: "cosmetic",
-    iconUrl: "icons/blue_scarf.png",
-  },
-];
+type GifticonCategory = "전체" | "커피" | "편의점" | "디저트" | "상품권";
 
-const MOCK_POSE_ITEMS: PoseShopItem[] = [
-  {
-    id: "pose001",
-    name: "춤추기 자세",
-    description: "펫이 신나게 춤을 춥니다!",
-    price: 25,
-    category: "pose",
-    animationName: "dance", // PetAnimationType과 연관
-    iconUrl: "icons/dance_pose.png",
-  },
-  {
-    id: "pose002",
-    name: "앉기 자세",
-    description: "펫이 예쁘게 앉는 자세를 배웁니다.",
-    price: 20,
-    category: "pose",
-    animationName: "sit",
-    iconUrl: "icons/sit_pose.png",
-  },
-];
-
-const MOCK_CONSUMABLE_ITEMS: ConsumableShopItem[] = [
-  {
-    id: "consumable001",
-    name: "성장 부스터 (24시간)",
-    description: "24시간 동안 애완동물의 성장 속도가 2배로 증가합니다.",
-    price: 30,
-    category: "consumable",
-    durationHours: 24,
-    effectMultiplier: 2,
-    iconUrl: "icons/growth_boost.png",
-  },
-];
-
-const MOCK_ALL_ITEMS: ShopItem[] = [
-  ...MOCK_COSMETIC_ITEMS,
-  ...MOCK_POSE_ITEMS,
-  ...MOCK_CONSUMABLE_ITEMS,
-];
-
-const MOCK_USER_COIN_BALANCE: UserCoinBalance = {
-  currentCoins: 150,
+type GifticonItem = {
+  id: string;
+  brand: string;
+  name: string;
+  priceCoin: number;
+  category: Exclude<GifticonCategory, "전체">;
+  imageUri?: string;
+  tags?: string[];
+  isSoldOut?: boolean;
 };
 
-const fetchShopItems = async (): Promise<ShopItem[]> => {
-  return new Promise((resolve) =>
-    setTimeout(() => resolve(MOCK_ALL_ITEMS), 500)
+type CashbackPartner = {
+  id: string;
+  provider: string;
+  title: string;
+  summary: string;
+  rewardText: string;
+  imageUri?: string;
+  ctaLabel: string;
+  disabled?: boolean;
+};
+
+const MOCK_BALANCE_COIN = 170;
+
+const MOCK_GIFTICONS: GifticonItem[] = [
+  {
+    id: "gift-001",
+    brand: "스타벅스",
+    name: "아메리카노 Tall",
+    priceCoin: 3_900,
+    category: "커피",
+    tags: ["인기", "즉시교환"],
+  },
+  {
+    id: "gift-002",
+    brand: "메가MGC커피",
+    name: "아이스 아메리카노",
+    priceCoin: 2_400,
+    category: "커피",
+    tags: ["가성비"],
+  },
+  {
+    id: "gift-003",
+    brand: "CU",
+    name: "모바일 상품권 5,000원",
+    priceCoin: 5_200,
+    category: "편의점",
+    tags: ["실속"],
+  },
+  {
+    id: "gift-004",
+    brand: "GS25",
+    name: "모바일 상품권 10,000원",
+    priceCoin: 10_500,
+    category: "편의점",
+    tags: ["베스트"],
+  },
+  {
+    id: "gift-005",
+    brand: "배스킨라빈스",
+    name: "싱글레귤러",
+    priceCoin: 3_800,
+    category: "디저트",
+    tags: ["한정"],
+    isSoldOut: true,
+  },
+  {
+    id: "gift-006",
+    brand: "이마트24",
+    name: "모바일 상품권 3,000원",
+    priceCoin: 3_100,
+    category: "편의점",
+    tags: ["즉시교환"],
+  },
+  {
+    id: "gift-007",
+    brand: "네이버페이",
+    name: "포인트 교환권 5,000P",
+    priceCoin: 5_700,
+    category: "상품권",
+    tags: ["현금성"],
+  },
+  {
+    id: "gift-008",
+    brand: "신세계 상품권",
+    name: "교환권 10,000원",
+    priceCoin: 11_200,
+    category: "상품권",
+    tags: ["프리미엄"],
+  },
+];
+
+const MOCK_CASHBACK: CashbackPartner[] = [
+  {
+    id: "cash-001",
+    provider: "카카오페이",
+    title: "카카오페이 결제 캐시백",
+    summary:
+      "결제 수단을 연동하고 미션을 달성하면 캐시백이 쌓이는 것처럼 보여요.",
+    rewardText: "최대 3% 캐시백",
+    ctaLabel: "연동하고 받기",
+  },
+  {
+    id: "cash-002",
+    provider: "네이버페이",
+    title: "네이버페이 포인트 적립",
+    summary:
+      "페이 연동 후 일정 조건을 만족하면 포인트를 받는 흐름(모킹)입니다.",
+    rewardText: "최대 2% 적립",
+    ctaLabel: "신청하기",
+  },
+  {
+    id: "cash-003",
+    provider: "토스",
+    title: "토스 캐시백 이벤트",
+    summary: "연동 후 주간 리워드 정산으로 캐시백을 받는 것처럼 구현합니다.",
+    rewardText: "주간 정산",
+    ctaLabel: "이벤트 참여",
+  },
+  {
+    id: "cash-004",
+    provider: "페이코",
+    title: "PAYCO 혜택 받기",
+    summary: "연동 및 약관 동의 플로우를 버튼/알림으로만 모킹합니다.",
+    rewardText: "최대 5,000원",
+    ctaLabel: "혜택 받기",
+    disabled: true,
+  },
+];
+
+type MockImageFrameProps = {
+  imageUri?: string;
+  label: string;
+  width?: number | string;
+  height: number;
+  borderRadius?: number | string;
+};
+
+const MockImageFrame = ({
+  imageUri,
+  label,
+  width = "100%",
+  height,
+  borderRadius = "$4",
+}: MockImageFrameProps) => {
+  return (
+    <YStack
+      w={width}
+      h={height}
+      br={borderRadius as any}
+      overflow="hidden"
+      bg="$background2"
+      borderWidth={1}
+      borderColor="$color3"
+      ai="center"
+      jc="center"
+    >
+      {imageUri ? (
+        <Image
+          source={{ uri: imageUri }}
+          resizeMode="cover"
+          style={{ width: "100%", height: "100%" }}
+        />
+      ) : (
+        <Text type="caption" color="$text3">
+          {label}
+        </Text>
+      )}
+    </YStack>
   );
 };
 
-const fetchUserCoinBalance = async (): Promise<UserCoinBalance> => {
-  return new Promise((resolve) =>
-    setTimeout(() => resolve(MOCK_USER_COIN_BALANCE), 200)
+type GifticonCardProps = {
+  item: GifticonItem;
+  onPressExchange: (item: GifticonItem) => void;
+};
+
+const GifticonCard = ({ item, onPressExchange }: GifticonCardProps) => {
+  const disabled = Boolean(item.isSoldOut);
+
+  return (
+    <YStack
+      w="48%"
+      p="$md"
+      bg="$background2"
+      borderCurve="continuous"
+      borderRadius={"$xl"}
+      gap="$3"
+      borderColor="$color3"
+    >
+      <MockImageFrame
+        label="상품 이미지"
+        imageUri={item.imageUri}
+        height={88}
+        borderRadius="$lg"
+      />
+
+      <YStack space="$1" mt={"$xs"}>
+        <Text type="caption" color="$text4" fontSize={"$1"}>
+          {item.brand}
+        </Text>
+        <Text type="bodyLarge" numberOfLines={2}>
+          {item.name}
+        </Text>
+      </YStack>
+
+      <XStack ai="center" jc="space-between" mb={"$2"} ml={1}>
+        <Text type="bodyLarge" color={"$accent5"}>
+          {item.priceCoin.toLocaleString()} 코인
+        </Text>
+        {disabled ? (
+          <Chip
+            text="품절"
+            themeColor="gray"
+            variantStyle="outlined"
+            size="sm"
+          />
+        ) : null}
+      </XStack>
+
+      {item.tags?.length ? (
+        <XStack flexWrap="wrap" gap="$2">
+          {item.tags.map((tag) => (
+            <Chip
+              key={`${item.id}-${tag}`}
+              text={tag}
+              themeColor="gray"
+              variantStyle="filled"
+              size="sm"
+              mb="$1"
+            />
+          ))}
+        </XStack>
+      ) : null}
+
+      <Button
+        mt="$2"
+        size="sm"
+        variant={disabled ? "secondary" : "primary"}
+        backgroundColor={"$color9"}
+        disabled={disabled}
+        onPress={() => onPressExchange(item)}
+        fontSize={"$3"}
+        textProps={{
+          fontSize: "$3",
+          fontWeight: 800,
+        }}
+      >
+        {disabled ? "품절" : "교환"}
+      </Button>
+    </YStack>
   );
 };
 
-const purchaseShopItemAPI = async (
-  itemId: string,
-  currentCoins: number
-): Promise<{
-  success: boolean;
-  newCoinBalance?: number;
-  purchasedItem?: ShopItem;
-  error?: string;
-}> => {
-  console.log(`Attempting to purchase item: ${itemId}`);
-  return new Promise((resolve) =>
-    setTimeout(() => {
-      const item = MOCK_ALL_ITEMS.find((i) => i.id === itemId);
-      if (!item) {
-        return resolve({
-          success: false,
-          error: "존재하지 않는 아이템입니다.",
-        });
-      }
-      if (currentCoins < item.price) {
-        return resolve({ success: false, error: "코인이 부족합니다." });
-      }
-      // 모킹: 구매 성공 처리
-      const newBalance = currentCoins - item.price;
-      MOCK_USER_COIN_BALANCE.currentCoins = newBalance; // 실제라면 DB 업데이트 후 새 잔액 반환
-      // TODO: 실제로는 사용자의 인벤토리에 아이템 추가 로직 필요
-      console.log(
-        `Item ${itemId} purchased. New balance: ${newBalance}. User inventory should be updated.`
-      );
-      resolve({
-        success: true,
-        newCoinBalance: newBalance,
-        purchasedItem: item,
-      });
-    }, 700)
+type CashbackCardProps = {
+  partner: CashbackPartner;
+  onPress: (partner: CashbackPartner) => void;
+};
+
+const CashbackCard = ({ partner, onPress }: CashbackCardProps) => {
+  const disabled = Boolean(partner.disabled);
+
+  return (
+    <YStack
+      p="$md"
+      bg="$background2"
+      bw={1}
+      borderCurve="continuous"
+      borderRadius={"$xl"}
+      gap="$3"
+      borderColor="$color3"
+    >
+      <XStack ai="center" space="$md">
+        <MockImageFrame
+          label="로고"
+          imageUri={partner.imageUri}
+          width={48}
+          height={48}
+          borderRadius={"$circular"}
+        />
+        <YStack f={1} space="$1">
+          <Text type="bodyLarge">{partner.title}</Text>
+          <Paragraph color="$text4" fontSize={"$2"} lh={18}>
+            {partner.summary}
+          </Paragraph>
+        </YStack>
+      </XStack>
+
+      <XStack ai="center" jc="space-between" my={"$1"}>
+        <Chip
+          text={partner.provider}
+          themeColor="gray"
+          variantStyle="filled"
+          size="md"
+        />
+        <Text type="bodySmall" color="$accent1" fos={"$2"}>
+          {partner.rewardText}
+        </Text>
+      </XStack>
+
+      <Button
+        width={"50%"}
+        alignSelf="flex-end"
+        size="md"
+        variant={disabled ? "secondary" : "primary"}
+        disabled={disabled}
+        onPress={() => onPress(partner)}
+      >
+        {partner.ctaLabel}
+      </Button>
+    </YStack>
   );
 };
-// --- End Mock Data & Service ---
 
-/**
- * 상점 화면입니다.
- * 사용자는 이 화면에서 다양한 아이템(치장, 자세, 소모품)을 코인으로 구매할 수 있습니다.
- * 현재 보유 코인이 표시되며, 아이템을 선택하여 상세 정보를 보고 구매할 수 있습니다.
- */
 export default function ShopScreen() {
-  const [items, setItems] = useState<ShopItem[]>([]);
-  const [coinBalance, setCoinBalance] = useState<UserCoinBalance | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [purchasingItemId, setPurchasingItemId] = useState<string | null>(null);
+  const [category, setCategory] = React.useState<GifticonCategory>("전체");
 
-  const loadShopData = useCallback(async () => {
-    setIsLoading(true);
-    try {
-      const [fetchedItems, fetchedBalance] = await Promise.all([
-        fetchShopItems(),
-        fetchUserCoinBalance(),
-      ]);
-      setItems(fetchedItems);
-      setCoinBalance(fetchedBalance);
-    } catch (error) {
-      console.error("Failed to load shop data:", error);
-      Alert.alert("오류", "상점 정보를 불러오는 데 실패했습니다.");
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
+  const categories: { value: GifticonCategory; label: string }[] = [
+    { value: "전체", label: "전체" },
+    { value: "커피", label: "커피" },
+    { value: "편의점", label: "편의점" },
+    { value: "디저트", label: "디저트" },
+    { value: "상품권", label: "상품권" },
+  ];
 
-  useFocusEffect(
-    useCallback(() => {
-      loadShopData();
-    }, [loadShopData])
-  );
+  const visibleGifticons = React.useMemo(() => {
+    if (category === "전체") return MOCK_GIFTICONS;
+    return MOCK_GIFTICONS.filter((item) => item.category === category);
+  }, [category]);
 
-  const handlePurchaseItem = async (item: ShopItem) => {
-    if (!coinBalance) {
-      Alert.alert("오류", "코인 정보를 불러올 수 없습니다.");
-      return;
-    }
-    if (coinBalance.currentCoins < item.price) {
-      Alert.alert("코인 부족", "아이템을 구매하기 위한 코인이 부족합니다.");
-      return;
-    }
-
-    setPurchasingItemId(item.id);
+  const handleGifticonExchange = (item: GifticonItem) => {
     Alert.alert(
-      "구매 확인",
-      `'${item.name}' 아이템을 ${item.price}코인으로 구매하시겠습니까?`,
-      [
-        {
-          text: "취소",
-          style: "cancel",
-          onPress: () => setPurchasingItemId(null),
-        },
-        {
-          text: "구매",
-          onPress: async () => {
-            try {
-              const result = await purchaseShopItemAPI(
-                item.id,
-                coinBalance.currentCoins
-              );
-              if (
-                result.success &&
-                result.newCoinBalance !== undefined &&
-                result.purchasedItem
-              ) {
-                Alert.alert(
-                  "구매 완료!",
-                  `'${result.purchasedItem.name}' 아이템을 구매했습니다.`
-                );
-                setCoinBalance({ currentCoins: result.newCoinBalance });
-                // TODO: 구매한 아이템에 따라 추가 로직 (예: 인벤토리 업데이트, 펫 상태 변경 등)
-                // 예: if (result.purchasedItem.category === 'cosmetic') { updateUserPetAppearance(...) }
-              } else {
-                Alert.alert(
-                  "구매 실패",
-                  result.error || "아이템 구매에 실패했습니다."
-                );
-              }
-            } catch (error) {
-              console.error("Error purchasing item:", error);
-              Alert.alert("오류", "아이템 구매 중 문제가 발생했습니다.");
-            } finally {
-              setPurchasingItemId(null);
-            }
-          },
-        },
-      ]
+      "기프티콘 교환(모킹)",
+      `${item.brand} - ${
+        item.name
+      }\n필요 코인: ${item.priceCoin.toLocaleString()} 코인\n\n(모킹) 실제 교환/발급은 동작하지 않습니다.`,
+      [{ text: "확인" }]
     );
   };
 
-  if (isLoading) {
-    return (
-      <ScreenContainer scrollable={false} safeAreaTop>
-        <YStack f={1} jc="center" ai="center" space="$md">
-          <Spinner size="large" color="$accent1" />
-          <Text type="body" colorVariant="secondary">
-            상점 정보를 불러오는 중...
-          </Text>
-        </YStack>
-      </ScreenContainer>
+  const handleCashbackApply = (partner: CashbackPartner) => {
+    Alert.alert(
+      "캐시백 신청(모킹)",
+      `${partner.provider}\n${partner.rewardText}\n\n(모킹) 연동/약관 동의/지급 절차는 추후 구현 예정입니다.`,
+      [{ text: "확인" }]
     );
-  }
+  };
 
   return (
-    <ScreenContainer scrollable={false} padded={"horizontal"}>
-      <XStack p="$lg" jc="space-between" ai="center" pb="$lg">
-        <Text type="h2">상점</Text>
+    <ScreenContainer scrollable>
+      <XStack
+        ai="center"
+        jc="space-between"
+        py="$6"
+        px={"$5"}
+        bbw={1}
+        boc="$color3"
+      >
+        <Text type="bodyLarge">보유 코인</Text>
+        <Chip
+          text={`${MOCK_BALANCE_COIN.toLocaleString()} 코인`}
+          themeColor="primary"
+          variantStyle="filled"
+        />
       </XStack>
 
-      <YStack px="$lg" pb="$md">
-        <CoinBalanceDisplay
-          balance={coinBalance}
-          isLoading={isLoading && !coinBalance}
-        />
-      </YStack>
+      <YStack f={1} p="$md" space="$md" mt={"$4"}>
+        <YStack space="$xs">
+          <Text type="h2">상점</Text>
+          <Paragraph color="$text2">
+            리워드(코인)로 기프티콘 교환 / 현금성 캐시백 신청을 할 수 있어요.
+          </Paragraph>
+        </YStack>
 
-      <Separator mx="$lg" bg={"$border1"} boc={"$border1"} />
+        <Separator my="$md" />
 
-      <YStack f={1} pt="$md" p="$md">
-        {!items.length && !isLoading ? (
-          <YStack f={1} ai="center" jc="center" p="$lg" space="$md" mih={200}>
-            <Text type="h3">🛍️</Text>
-            <Text type="body" colorVariant="secondary" ta="center">
-              현재 판매 중인 아이템이 없습니다.
-            </Text>
+        <YStack>
+          <XStack ai="center" jc="space-between">
+            <Text type="h3">기프티콘 교환</Text>
+          </XStack>
+
+          <XStack flexWrap="wrap" gap="$3" mt={"$4"}>
+            {categories.map((c) => {
+              const selected = c.value === category;
+
+              return (
+                <Button
+                  key={c.value}
+                  size="sm"
+                  height={28}
+                  bw={0}
+                  variant={selected ? "primary" : "secondary"}
+                  backgroundColor={selected ? "$accent1" : "$background1"}
+                  circular
+                  onPress={() => setCategory(c.value)}
+                >
+                  <Text
+                    type="button"
+                    color={selected ? "$color1" : "$text1"}
+                    fontSize="$2"
+                  >
+                    {c.label}
+                  </Text>
+                </Button>
+              );
+            })}
+          </XStack>
+
+          {visibleGifticons.length === 0 ? (
+            <Paragraph color="$text2">
+              선택한 카테고리에 판매 항목이 없습니다.
+            </Paragraph>
+          ) : (
+            <XStack
+              flexWrap="wrap"
+              jc="space-between"
+              rowGap="$5"
+              columnGap="$3"
+              mt={"$8"}
+            >
+              {visibleGifticons.map((item) => (
+                <GifticonCard
+                  key={item.id}
+                  item={item}
+                  onPressExchange={handleGifticonExchange}
+                />
+              ))}
+            </XStack>
+          )}
+        </YStack>
+
+        <Separator my="$md" />
+
+        <YStack>
+          <XStack ai="center" jc="space-between">
+            <Text type="h3">현금성 캐시백</Text>
+          </XStack>
+
+          <YStack gap="$6" mt={"$8"}>
+            {MOCK_CASHBACK.map((partner) => (
+              <CashbackCard
+                key={partner.id}
+                partner={partner}
+                onPress={handleCashbackApply}
+              />
+            ))}
           </YStack>
-        ) : (
-          <ShopItemList
-            items={items}
-            onPurchaseItem={handlePurchaseItem}
-            purchasingItemId={purchasingItemId}
-            currentCoinBalance={coinBalance?.currentCoins}
-            isLoading={isLoading && items.length === 0}
-          />
-        )}
+        </YStack>
+
+        <Separator my="$md" />
       </YStack>
     </ScreenContainer>
   );

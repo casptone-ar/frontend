@@ -125,10 +125,12 @@ export const ScreenContainer = <T extends boolean>({
   };
 
   if (scrollable) {
+    const { tabIndex, ...scrollProps } = rest;
+
     return (
       <ScreenScrollViewFrame
         contentContainerStyle={styleWithSafeArea}
-        {...rest}
+        {...(scrollProps as any)}
       >
         {children}
       </ScreenScrollViewFrame>
@@ -136,7 +138,7 @@ export const ScreenContainer = <T extends boolean>({
   }
 
   return (
-    <ScreenContainerFrame style={styleWithSafeArea} {...rest}>
+    <ScreenContainerFrame style={styleWithSafeArea as any} {...rest}>
       {children}
     </ScreenContainerFrame>
   );

@@ -1,105 +1,124 @@
-import { Lock, Mail } from "@tamagui/lucide-icons"; // 아이콘 예시
+// app/(auth)/sign-in.tsx
+import { Lock, Mail } from "@tamagui/lucide-icons";
 import { Link, useRouter } from "expo-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { Platform, Pressable } from "react-native";
 import { YStack } from "tamagui";
+import { useStore } from "zustand";
 
-// 코어 컴포넌트 임포트
+// Apple
+import * as AppleAuthentication from "expo-apple-authentication";
+
+// import AsyncStorage from "@react-native-async-storage/async-storage";
+// import { API } from "@/service/lib/Http/adapter";
+
 import { Button } from "@/View/core/Button/Button";
 import { Input } from "@/View/core/Input/Input";
 import { ScreenContainer } from "@/View/core/ScreenContainer/ScreenContainer";
 import { Text } from "@/View/core/Text/Text";
-// import { Header } from '@/View/core/Header/Header'; // 로그인 화면에는 헤더가 없을 수 있음
+import { authStore } from "@/View/store/authStore";
 
-/**
- * 로그인 화면입니다.
- */
 export default function SignInScreen() {
   const router = useRouter();
+  const { login, isLoading, error } = useStore(authStore);
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
 
-  const handleSignIn = () => {
-    setIsLoading(true);
-    // TODO: 실제 로그인 로직 구현 (application hook 또는 service 호출)
-    console.log("Sign In:", { email, password });
-    setTimeout(() => {
-      setIsLoading(false);
-      // 예시: 로그인 성공 시 홈으로 이동
+  // ---- Apple 로그인 사용 가능 여부 확인 ----
+  const [appleAvailable, setAppleAvailable] = useState(false);
+  useEffect(() => {
+    if (Platform.OS !== "ios") return;
+    AppleAuthentication.isAvailableAsync()
+      .then(setAppleAvailable)
+      .catch(() => setAppleAvailable(false));
+  }, []);
+
+  // ---- 이메일/비밀번호 로그인 ----
+  const handleSignIn = async () => {
+    try {
+      const ok = await login(email, password);
+      if (!ok) {
+        console.warn("로그인 실패:", error);
+      }
+    } catch (e) {
+      console.error("로그인 중 에러:", e);
+    }
+  };
+
+  // ---- Apple 로그인 ----
+  const handleAppleSignIn = async () => {
+    try {
+      const cred = await AppleAuthentication.signInAsync({
+        requestedScopes: [
+          AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
+          AppleAuthentication.AppleAuthenticationScope.EMAIL,
+        ],
+      });
+
+      console.log("[APPLE] user:", cred.user);
+      console.log("[APPLE] identityToken length:", cred.identityToken?.length);
+
+      // 서버 준비 후:
+      // const { accessToken } = await API.post("/auth/apple", {
+      //   identityToken: cred.identityToken,
+      //   user: cred.user,
+      // });
+      // await AsyncStorage.setItem("token", accessToken);
       router.replace("/(protected)/home");
-    }, 1500);
+    } catch (e: any) {
+      if (e?.code === "ERR_REQUEST_CANCELED") return;
+      console.error("Apple 로그인 실패:", e);
+    }
   };
 
   return (
-    <ScreenContainer
-      scrollable // 내용이 길어질 경우 스크롤 가능하도록
-      padded // 전체 화면에 패딩 적용
-      contentContainerStyle={{ flexGrow: 1, justifyContent: "center" }} // 컨텐츠 중앙 정렬 (scrollable 시)
-    >
-      {/* <Header title="로그인" /> // 필요시 헤더 추가 */}
-      <YStack space="$6" flex={1} jc="center">
-        <YStack space="$2" ai="center" mb="$xl">
-          {/* 로고 이미지 또는 앱 이름 */}
-          {/* <Image source={require('@/assets/images/logo.png')} width={100} height={100} /> */}
+    <ScreenContainer scrollable={false} safeAreaBottom={true}>
+      <YStack gap="$2" flex={1} jc="center">
+        {/* 로고 & 소개 */}
+        <YStack space="$2" ai="center" jc="center" mb="$xl" flex={1}>
           <Text type="h1" colorVariant="accent">
             NeoPets
           </Text>
           <Text type="h3" colorVariant="secondary" textAlign="center">
-            펫과 함께하는 새로운 일상
+            AR 기반 펫 시뮬레이터
           </Text>
         </YStack>
 
-        <YStack space="$4">
-          <Input
-            label="Email address"
-            placeholder="Enter your email"
-            value={email}
-            onChangeText={setEmail}
-            keyboardType="email-address"
-            autoCapitalize="none"
-            leftIcon={<Mail color="$text3" size={20} />} // 아이콘 크기 및 색상 조정
-            // size="lg" // 필요시 Input 크기 조정
-          />
-          <Input
-            label="Password"
-            placeholder="Enter your password"
-            value={password}
-            onChangeText={setPassword}
-            secureTextEntry
-            secureTextEntryToggle // 비밀번호 보이기/숨기기 토글 추가
-            leftIcon={<Lock color="$text3" size={20} />}
-            // size="lg"
-          />
+        {/* 로그인 버튼 영역 */}
+        <YStack
+          space="$3"
+          mt="$lg"
+          flex={1}
+          jc="flex-end"
+          paddingHorizontal={"$5"}
+        >
+          {/* iOS: Apple 로그인 버튼 */}
+          {Platform.OS === "ios" && appleAvailable && (
+            <AppleAuthentication.AppleAuthenticationButton
+              buttonType={
+                AppleAuthentication.AppleAuthenticationButtonType.SIGN_IN
+              }
+              buttonStyle={
+                AppleAuthentication.AppleAuthenticationButtonStyle.WHITE_OUTLINE
+              }
+              cornerRadius={24}
+              style={{ width: "100%", height: 64, marginTop: 8 }}
+              onPress={handleAppleSignIn}
+            />
+          )}
         </YStack>
 
-        <YStack space="$3" mt="$lg">
-          <Button
-            variant="primary"
-            size="lg" // 버튼 크기를 크게
-            onPress={handleSignIn}
-            loading={isLoading}
-            disabled={isLoading}
-            fullWidth // 버튼 너비 100%
-          >
-            Log In
-          </Button>
-          <Button
-            variant="secondary" // 또는 "outline", "ghost"
-            size="lg"
-            onPress={() => router.push("/(auth)/sign-up")}
-            disabled={isLoading}
-            fullWidth
-          >
-            Sign Up
-          </Button>
-        </YStack>
-
-        {/* "Already a member? Sign In" 스타일의 링크 (SignUp 화면용) */}
-        {/* SignIn 화면에서는 "Forgot Password?" 등이 더 적절할 수 있음 */}
-        <YStack jc="center" mt="$md">
+        {/* 비밀번호 재설정 링크 */}
+        <YStack jc="center" mt="$md" ai="center">
           <Text type="caption">Forgot your password? </Text>
           <Link href="/(auth)/forgot-password" asChild>
-            <Text type="caption" colorVariant="accent" fontWeight="$semibold">
+            <Text
+              type="caption"
+              colorVariant="accent"
+              fontWeight="$semibold"
+              mt={"$2"}
+            >
               Reset here
             </Text>
           </Link>

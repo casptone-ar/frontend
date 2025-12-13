@@ -1,8 +1,3 @@
-/**
- * Auth 서비스 어댑터
- */
-
-import { getAuth } from "@react-native-firebase/auth";
 import { InitializationSingleTon } from "../shared";
 import serviceMediator from "../shared";
 /**
@@ -16,12 +11,8 @@ export class AuthServiceAdapter extends InitializationSingleTon<AuthServiceAdapt
   }
 
   async signInAnounymously() {
-    try {
-      const signInResult = await getAuth().signInAnonymously();
-      return signInResult;
-    } catch (e: unknown) {
-      console.error(e);
-    }
+    console.warn("signInAnounymously is disabled (Firebase not in use)");
+    return null;
   }
 }
 

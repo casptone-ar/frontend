@@ -1,3 +1,4 @@
+// app.config.ts
 import type { ConfigContext, ExpoConfig } from "expo/config";
 
 const APP_SLUG = "neopets";
@@ -5,7 +6,7 @@ const APP_SLUG = "neopets";
 // 환경 타입 정의
 type Environment = "development" | "staging" | "production";
 
-// 광고 ID 타입 정의
+// 광고 ID 타입 정의 (현재 미사용이지만 남겨둠)
 interface AdMobConfig {
   androidAppId: string;
   iosAppId: string;
@@ -91,16 +92,8 @@ const EXPO_CAMERA_PLUGIN: Plugin = [
 const EXPO_ASSETS_PLUGIN: Plugin = [
   "expo-asset",
   {
-    assets: ["./assets"],
+    assets: ["./assets", "./assets/res"],
   },
-];
-
-const FIREBASE_APP_PLUGIN: Plugin = ["@react-native-firebase/app"];
-
-const FIREBASE_AUTH_PLUGIN: Plugin = ["@react-native-firebase/auth"];
-
-const FIREBASE_CRASHLYTICS_PLUGIN: Plugin = [
-  "@react-native-firebase/crashlytics",
 ];
 
 const BUILD_PROPERTIES_PLUGIN: Plugin = [
@@ -108,6 +101,7 @@ const BUILD_PROPERTIES_PLUGIN: Plugin = [
   {
     ios: {
       useFrameworks: "static",
+      forceStaticLinking: ["RNFBApp", "RNFBAnalytics"],
     },
   },
 ];
@@ -144,6 +138,24 @@ const EXPO_TRACKING_TRANSPARENCY_PLUGIN: Plugin = [
   },
 ];
 
+const VIRO_REACT_PLUGIN: Plugin = [
+  "@reactvision/react-viro",
+  {
+    ios: {
+      cameraUsagePermission: "Neopets uses your camera for AR experiences.",
+      microphoneUsagePermission:
+        "Neopets uses your microphone for AR experiences.",
+      photosPermission: "Neopets would like to read photos for AR experiences.",
+      savephotosPermission:
+        "Neopets would like to save photos to your library during AR experiences.",
+    },
+  },
+];
+
+const MAP_PLUGIN: Plugin = ["react-native-maps"];
+
+const APPLE_AUTHENTICATION_PLUGIN: Plugin = ["expo-apple-authentication"];
+
 export default ({ config }: ConfigContext): ExpoConfig => {
   // 현재 환경 설정 (기본값: development)
   const appVariant = process.env.APP_VARIANT || "development";
@@ -165,36 +177,58 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       resizeMode: "contain",
       backgroundColor: "#ffffff",
     },
+
     ios: {
       supportsTablet: true,
       bundleIdentifier: envConfig.bundleIdentifier,
       appleTeamId: "3MNYG65CXY",
+
+      // ✅ Apple 로그인 사용 (expo-apple-authentication 설치 시 권장)
+      usesAppleSignIn: true,
+
+      // ✅ Apple 로그인 Entitlements 명시적 추가
+      entitlements: {
+        "com.apple.developer.applesignin": ["Default"],
+      },
+
+      // ✅ HealthKit/암호화 관련 Info.plist 키 추가
       infoPlist: {
         ITSAppUsesNonExemptEncryption: false,
+        NSHealthShareUsageDescription:
+          "걸음수 등 건강 데이터를 분석해 맞춤 미션을 제공합니다.",
+        NSHealthUpdateUsageDescription:
+          "목표 달성 기록을 건강 데이터에 반영합니다.",
       },
+
       googleServicesFile: envConfig.googleServiceInfoPlist,
     },
+
     android: {
       adaptiveIcon: envConfig.adaptiveIcon,
       package: envConfig.bundleIdentifier,
       googleServicesFile: envConfig.googleServicesFile,
     },
+
     web: {
       favicon: "./assets/favicon.png",
     },
+
     plugins: [
       EXPO_ROUTER_PLUGIN,
       DEV_CLIENT_PLUGIN,
       EXPO_CAMERA_PLUGIN,
       EXPO_ASSETS_PLUGIN,
-      FIREBASE_APP_PLUGIN,
-      FIREBASE_AUTH_PLUGIN,
-      FIREBASE_CRASHLYTICS_PLUGIN,
       BUILD_PROPERTIES_PLUGIN,
       EXPO_MEDIA_LIBRARY_PLUGIN,
       EXPO_IMAGE_PICKER_PLUGIN,
       EXPO_TRACKING_TRANSPARENCY_PLUGIN,
+      VIRO_REACT_PLUGIN,
+      APPLE_AUTHENTICATION_PLUGIN,
+      MAP_PLUGIN,
+      // 참고: expo-apple-authentication은 별도 plugin 항목 불필요(패키지 설치만)
+      // HealthKit 브리지는 react-native-health 사용(별도 plugin 없으면 prebuild 후 Xcode에서 Capabilities 확인)
     ],
+
     extra: {
       APP_VARIANT: environment,
       eas: {

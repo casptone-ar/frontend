@@ -30,8 +30,11 @@
     *   [Service 작성](#service-작성-servicelibdomain)
     *   [Application Hook 작성](#application-hook-작성-applicationdomainactionts)
     *   [API 쿼리 함수 작성](#api-쿼리-함수-작성-serviceinboundquerydomaints)
-13. [필수 학습](#필수-학습)
-14. [라이선스](#라이선스)
+13. [AR 개발 가이드](#ar-개발-가이드)
+    *   [AR 학습 문서](#ar-학습-문서)
+    *   [AR 기능 구현 시작하기](#ar-기능-구현-시작하기)
+14. [필수 학습](#필수-학습)
+15. [라이선스](#라이선스)
 
 ## 주요 기능
 
@@ -469,6 +472,72 @@ Expo Application Services (EAS)를 사용하여 앱을 빌드하고 스토어에
         useExampleDataQuery.fetcher = getExampleData;
         ```
 
+## AR 개발 가이드
+
+본 프로젝트는 모바일 카메라 기반 AR(증강현실) 기능을 포함하고 있습니다. AR 개발에 필요한 종합적인 학습 자료는 `docs/` 디렉토리에서 확인할 수 있습니다.
+
+### AR 학습 문서
+
+1.  **[AR 완전 학습 가이드](docs/AR_LEARNING_GUIDE.md)** 📚
+    *   3D 그래픽 기초 개념 (메시, 텍스처, 렌더링 파이프라인)
+    *   코드/API 레벨 구현 방법
+    *   네이티브 플랫폼 AR 지식 (ARKit, ARCore, visionOS)
+    *   Viro 라이브러리 구조 및 추상화 방식
+    *   SLAM, 센서 퓨전, 공간 매핑 등 고급 개념
+    *   단계별 학습 로드맵 (12~17주)
+
+2.  **[AR 퀵 레퍼런스](docs/AR_QUICK_REFERENCE.md)** ⚡
+    *   핵심 용어 사전
+    *   좌표계 변환 치트시트
+    *   Viro 컴포넌트 레퍼런스
+    *   일반적인 문제 해결 방법
+    *   성능 최적화 체크리스트
+
+3.  **[AR 펫 시스템 구현 예제](docs/AR_IMPLEMENTATION_EXAMPLES.md)** 💻
+    *   기본 AR 펫 렌더링
+    *   펫 배치 시스템 (Hit Test)
+    *   펫 상호작용 (터치, 드래그, 먹이 주기)
+    *   펫 애니메이션 (GLTF, 프로시저럴)
+    *   멀티 펫 관리
+    *   환경 통합 (조명 추정, Occlusion)
+    *   성능 최적화 (LOD, 객체 풀링)
+
+### AR 기능 구현 시작하기
+
+1.  **학습 순서**:
+    ```
+    AR 완전 학습 가이드 (기초 개념) 
+    → AR 퀵 레퍼런스 (실무 참조) 
+    → AR 구현 예제 (코드 작성)
+    ```
+
+2.  **ViroReact 설치** (아직 설치되지 않은 경우):
+    ```bash
+    yarn add @viro-community/react-viro
+    # iOS
+    cd ios && pod install && cd ..
+    ```
+
+3.  **AR 화면 구현**:
+    *   `app/(protected)/ar.tsx`: AR 메인 화면
+    *   예제 코드는 [AR 구현 예제 문서](docs/AR_IMPLEMENTATION_EXAMPLES.md) 참조
+
+### 주요 AR 기술 스택
+
+*   **AR 프레임워크**: ViroReact (ARKit + ARCore 추상화)
+*   **3D 모델 포맷**: GLTF, GLB
+*   **네이티브 AR**:
+    *   iOS: ARKit
+    *   Android: ARCore
+*   **3D 그래픽**: OpenGL ES, Metal (iOS)
+
+### 참고 사항
+
+*   AR 기능은 실제 디바이스에서만 정상 작동합니다 (시뮬레이터 제한적).
+*   iOS: iPhone 6s 이상, iOS 11+
+*   Android: ARCore 지원 디바이스
+*   LiDAR 기능은 iPhone 12 Pro 이상, iPad Pro (2020) 이상에서만 지원됩니다.
+
 ## 필수 학습
 
 -   `domain/sharedkernel.d.ts`: 프로젝트 전반의 핵심 타입, 특히 `QueryFn` 및 관련 타입 이해.
@@ -478,6 +547,7 @@ Expo Application Services (EAS)를 사용하여 앱을 빌드하고 스토어에
 -   `service/lib/Store/adapter.ts`: `createPersistentStore` 함수 이해.
 -   `service/lib/Http/adapter.ts`: API 클라이언트 사용법 이해.
 -   `.cursor/rules/` 디렉토리 내의 규칙 파일들: 프로젝트의 코딩 컨벤션 및 아키텍처 가이드라인 숙지.
+-   **AR 개발 시**: `docs/AR_LEARNING_GUIDE.md` 및 `docs/AR_QUICK_REFERENCE.md` 숙지.
 
 ## 라이선스
 
