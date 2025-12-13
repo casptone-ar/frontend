@@ -1,7 +1,11 @@
 // View/store/missionStore.ts
 import { createStore, useStore } from "zustand";
 
-import type { Mission, MissionFilter, MissionStatus } from "@/domain/mission/types";
+import type {
+  Mission,
+  MissionFilter,
+  MissionStatus,
+} from "@/domain/mission/types";
 
 export type MissionSpot = {
   id: string;
@@ -134,7 +138,7 @@ const INITIAL_MISSIONS: Mission[] = [
     id: "daily_6",
     title: "백양중학교 앞 안전주행 60초",
     description:
-      "백양중학교 스팟에서 안전주행(급가속/급회전 없이)으로 60초 주행해요. (Mock)",
+      "백양중학교 스팟에서 안전주행(급가속/급회전 없이)으로 60초 주행해요.",
     type: "daily",
     status: "pending",
     rewards: [
@@ -205,8 +209,7 @@ const INITIAL_MISSIONS: Mission[] = [
   {
     id: "weekly_4",
     title: "어울림 누리 체육관 랩 2회 완주",
-    description:
-      "어울림 누리 체육관 스팟에서 AR 트랙을 2회 완주해보세요. (Mock)",
+    description: "어울림 누리 체육관 스팟에서 AR 트랙을 2회 완주해보세요.",
     type: "weekly",
     status: "in-progress",
     rewards: [
@@ -224,7 +227,7 @@ const INITIAL_MISSIONS: Mission[] = [
     id: "weekly_5",
     title: "별무리경기장 스프린트 400m",
     description:
-      "별무리경기장 스팟에서 직선 스프린트 코스를 400m 주행해보세요. (Mock)",
+      "별무리경기장 스팟에서 직선 스프린트 코스를 400m 주행해보세요.",
     type: "weekly",
     status: "pending",
     rewards: [
@@ -241,8 +244,7 @@ const INITIAL_MISSIONS: Mission[] = [
   {
     id: "weekly_6",
     title: "대장천 주행 로그 3회 전송",
-    description:
-      "대장천 스팟에서 주행 로그(이벤트/센서)를 3회 전송해보세요. (Mock)",
+    description: "대장천 스팟에서 주행 로그(이벤트/센서)를 3회 전송해보세요.",
     type: "weekly",
     status: "pending",
     rewards: [
@@ -382,7 +384,8 @@ const resolveNextStatus = ({
   targetValue?: number;
 }): MissionStatus => {
   if (prevStatus === "failed") return "failed";
-  if (targetValue !== undefined && nextCurrentValue >= targetValue) return "completed";
+  if (targetValue !== undefined && nextCurrentValue >= targetValue)
+    return "completed";
   if (prevStatus === "completed") return "completed";
   if (nextCurrentValue > 0) return "in-progress";
   return "pending";
@@ -441,7 +444,9 @@ export const missionStore = createStore<MissionStore>((set, get) => ({
         const prev = m.currentValue ?? 0;
         const rawNext = prev + amount;
         const next =
-          m.targetValue !== undefined ? clamp(rawNext, 0, m.targetValue) : rawNext;
+          m.targetValue !== undefined
+            ? clamp(rawNext, 0, m.targetValue)
+            : rawNext;
 
         const nextStatus = resolveNextStatus({
           prevStatus: m.status,
@@ -469,7 +474,7 @@ export const missionStore = createStore<MissionStore>((set, get) => ({
         return {
           ...m,
           status: "completed",
-          currentValue: hasTarget ? target : (m.currentValue ?? 1),
+          currentValue: hasTarget ? target : m.currentValue ?? 1,
           targetValue: m.targetValue,
         };
       }),

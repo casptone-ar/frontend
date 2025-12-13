@@ -1,4 +1,10 @@
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import React, {
+  useState,
+  useEffect,
+  useRef,
+  useCallback,
+  useLayoutEffect,
+} from "react";
 import { StyleSheet } from "react-native";
 import {
   ViroARScene,
@@ -26,6 +32,12 @@ const CAR_CONFIG = {
   WHEEL_CIRCUMFERENCE: 0.1,
   MAX_LEAN_ROTATION: 10,
 };
+
+/**
+ * AR 노드(ViroText)로 띄우는 디버그/버튼 UI 표시 여부
+ * - 앱 UX는 2D 오버레이(React Native View) 중심으로 가므로 기본은 false
+ */
+const SHOW_AR_NODE_HUD = false;
 
 // 바퀴 위치
 const WHEEL_POSITIONS = {
@@ -62,13 +74,6 @@ interface CarState {
 // =====================================================
 // ViroMaterials 설정
 // =====================================================
-ViroMaterials.createMaterials({
-  dropShadow: {
-    diffuseTexture: require("../../../../assets/res/car_shadow.png"),
-    lightingModel: "Constant",
-    blendMode: "Subtract",
-  },
-});
 
 // =====================================================
 // 메인 컴포넌트
@@ -76,6 +81,16 @@ ViroMaterials.createMaterials({
 export const DrivingCarScene: React.FC<DrivingCarSceneProps> = (props) => {
   const { sceneNavigator } = props;
   const viroAppProps = sceneNavigator?.viroAppProps;
+
+  // useLayoutEffect(() => {
+  //   ViroMaterials.createMaterials({
+  //     dropShadow: {
+  //       diffuseTexture: require("../../../../assets/res/car_shadow.png"),
+  //       lightingModel: "Constant",
+  //       blendMode: "Subtract",
+  //     },
+  //   });
+  // }, []);
 
   // =====================================================
   // State
@@ -401,39 +416,46 @@ export const DrivingCarScene: React.FC<DrivingCarSceneProps> = (props) => {
     <ViroARScene>
       <ViroAmbientLight color="#f5f8e0" intensity={200} />
 
-      {/* 상단 버튼들 */}
-      <ViroText
-        text="← Back"
-        scale={[0.2, 0.2, 0.2]}
-        position={[-0.4, 0.5, -1]}
-        style={styles.buttonStyle}
-        onClick={goBack}
-      />
-      <ViroText
-        text="Reset"
-        scale={[0.2, 0.2, 0.2]}
-        position={[0.4, 0.5, -1]}
-        style={styles.buttonStyle}
-        onClick={handleManualReset}
-      />
+      {/* (권장) AR 노드(ViroText) UI는 UX를 흐려서 기본 비활성화 */}
+      {SHOW_AR_NODE_HUD ? (
+        <>
+          {/* 상단 버튼들 */}
+          <ViroText
+            text="← Back"
+            scale={[0.2, 0.2, 0.2]}
+            position={[-0.4, 0.5, -1]}
+            style={styles.buttonStyle}
+            onClick={goBack}
+          />
+          <ViroText
+            text="Reset"
+            scale={[0.2, 0.2, 0.2]}
+            position={[0.4, 0.5, -1]}
+            style={styles.buttonStyle}
+            onClick={handleManualReset}
+          />
 
-      {/* 상태 텍스트 */}
-      <ViroText
-        text={statusText}
-        scale={[0.15, 0.15, 0.15]}
-        position={[0, 0.35, -1]}
-        style={styles.statusStyle}
-      />
+          {/* 상태 텍스트 */}
+          <ViroText
+            text={statusText}
+            scale={[0.15, 0.15, 0.15]}
+            position={[0, 0.35, -1]}
+            style={styles.statusStyle}
+          />
+        </>
+      ) : null}
 
       {/* 평면 선택 전: 안내 + 평면 선택기 */}
       {!planeSelected && (
         <>
-          <ViroText
-            text="Tap the floor to select a plane"
-            scale={[0.3, 0.3, 0.3]}
-            position={[0, 0.1, -2]}
-            style={styles.textStyle}
-          />
+          {SHOW_AR_NODE_HUD ? (
+            <ViroText
+              text="Tap the floor to select a plane"
+              scale={[0.3, 0.3, 0.3]}
+              position={[0, 0.1, -2]}
+              style={styles.textStyle}
+            />
+          ) : null}
           <ViroARPlaneSelector
             minHeight={0.2}
             minWidth={0.2}
@@ -459,29 +481,35 @@ export const DrivingCarScene: React.FC<DrivingCarSceneProps> = (props) => {
       {/* 평면 선택 후: 운전 가능한 차량 */}
       {planeSelected && renderCarModel()}
 
-      {/* 디버그 정보 */}
-      <ViroText
-        text={`Speed: ${(physicsRef.current.velocity * 1000).toFixed(1)} mm/s`}
-        scale={[0.1, 0.1, 0.1]}
-        position={[0, -0.1, -1]}
-        style={styles.debugStyle}
-      />
-      <ViroText
-        text={`Plane: [${planeWorldPosition
-          .map((v) => v.toFixed(2))
-          .join(", ")}]`}
-        scale={[0.08, 0.08, 0.08]}
-        position={[0, -0.18, -1]}
-        style={styles.debugStyle}
-      />
-      <ViroText
-        text={`Relative: [${carState.position
-          .map((v) => v.toFixed(2))
-          .join(", ")}]`}
-        scale={[0.08, 0.08, 0.08]}
-        position={[0, -0.26, -1]}
-        style={styles.debugStyle}
-      />
+      {SHOW_AR_NODE_HUD ? (
+        <>
+          {/* 디버그 정보 */}
+          <ViroText
+            text={`Speed: ${(physicsRef.current.velocity * 1000).toFixed(
+              1
+            )} mm/s`}
+            scale={[0.1, 0.1, 0.1]}
+            position={[0, -0.1, -1]}
+            style={styles.debugStyle}
+          />
+          <ViroText
+            text={`Plane: [${planeWorldPosition
+              .map((v) => v.toFixed(2))
+              .join(", ")}]`}
+            scale={[0.08, 0.08, 0.08]}
+            position={[0, -0.18, -1]}
+            style={styles.debugStyle}
+          />
+          <ViroText
+            text={`Relative: [${carState.position
+              .map((v) => v.toFixed(2))
+              .join(", ")}]`}
+            scale={[0.08, 0.08, 0.08]}
+            position={[0, -0.26, -1]}
+            style={styles.debugStyle}
+          />
+        </>
+      ) : null}
     </ViroARScene>
   );
 };

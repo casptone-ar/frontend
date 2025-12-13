@@ -136,7 +136,7 @@ export default function HomeScreen() {
                     화정역 주변 스팟
                   </Text>
                   <Text type="caption" colorVariant="secondary">
-                    마커를 눌러 스팟 미션을 확인하세요 (Mock)
+                    마커를 눌러 스팟 미션을 확인하세요
                   </Text>
                 </YStack>
               </XStack>
