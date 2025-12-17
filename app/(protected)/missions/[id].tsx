@@ -69,6 +69,12 @@ export default function MissionDetailScreen() {
     getMissionById,
   } = useMissionStore();
 
+  const handleStartMission = (id: string) => {
+    if (!id) return;
+    startMission(id);
+    router.push(`/(protected)/ar`);
+  };
+
   const mission = useMemo(() => {
     if (!id) return undefined;
     // getMissionById는 store의 get()을 사용하므로 missions 의존 없이도 최신값을 반환합니다.
@@ -331,7 +337,7 @@ export default function MissionDetailScreen() {
             <YStack gap="$sm">
               <Button
                 variant="primary"
-                onPress={() => startMission(mission.id)}
+                onPress={() => handleStartMission(mission.id)}
               >
                 시작하기
               </Button>
@@ -369,7 +375,7 @@ export default function MissionDetailScreen() {
               </XStack>
 
               <Text type="caption" colorVariant="secondary">
-                팁: 아래 버튼으로 주행/업로드 진행도를 임의로 올려볼 수 있어요. (Mock)
+                팁: 아래 버튼으로 주행/업로드 진행도를 임의로 올려볼 수 있어요.
               </Text>
             </YStack>
           ) : null}
