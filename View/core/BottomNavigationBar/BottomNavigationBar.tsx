@@ -4,6 +4,7 @@ import {
   Home,
   ListChecks,
   PawPrint,
+  Settings,
   Store,
 } from "@tamagui/lucide-icons";
 import type React from "react";
@@ -60,11 +61,11 @@ export const BottomNavigationBar = ({
   // 탭 정보 정의 (아이콘, 라벨, 경로)
   // app/(protected)/_layout.tsx의 Tabs.Screen 순서와 name을 기반으로 함
   const tabsConfig = [
-    { name: "home", label: "홈", Icon: Home },
-    { name: "missions", label: "미션", Icon: ListChecks },
-    { name: "ar", label: "AR", Icon: PawPrint, isCenter: true }, // 가운데 AR 버튼
-    { name: "shop", label: "상점", Icon: Store },
-    { name: "collection", label: "동물농장", Icon: PawPrint },
+    { name: "home", label: "홈", Icon: Home, disabled: false },
+    { name: "missions", label: "미션", Icon: ListChecks, disabled: false },
+    { name: "ar", label: "AR", Icon: Camera, isCenter: true, disabled: false }, // 가운데 AR 버튼
+    { name: "shop", label: "상점", Icon: Store, disabled: false },
+    { name: "collection", label: "설정", Icon: Settings, disabled: true },
   ];
 
   return (
@@ -84,7 +85,7 @@ export const BottomNavigationBar = ({
 
         if (!tabInfo) return null;
 
-        const { label: tabConfigLabel, Icon, isCenter } = tabInfo;
+        const { label: tabConfigLabel, Icon, isCenter, disabled } = tabInfo;
 
         const isFocused = state.index === index;
 
@@ -151,6 +152,8 @@ export const BottomNavigationBar = ({
             pressStyle={{
               borderWidth: 0,
             }}
+            disabled={disabled}
+            opacity={disabled ? 0.5 : 1}
             icon={
               <YStack ai="center" gap="$xxs" p="$xs">
                 <Icon color={iconColor} size={24} strokeWidth={2} />

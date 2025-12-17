@@ -5,6 +5,7 @@ import {
   CheckCircle2,
   Circle,
   CircleCheck,
+  CircleX,
   FileCheck2,
   Image as ImageIcon,
   UploadCloud,
@@ -29,15 +30,18 @@ type ProcessingStage = {
 };
 
 const PROCESSING_STAGES: ProcessingStage[] = [
-  { key: "collect_video", title: "영상 데이터 수집중", durationMs: 900 },
-  { key: "compress_video", title: "영상 데이터 압축 중", durationMs: 1100 },
-  { key: "send_images", title: "이미지 데이터 전송중", durationMs: 1000 },
+  { key: "validate", title: "청크 데이터 유효성 검증 중", durationMs: 2200 },
+  {
+    key: "validate_images",
+    title: "수집된 이미지 유효성 검증 중",
+    durationMs: 2600,
+  },
   {
     key: "send_video_chunks",
     title: "영상 데이터 청크 전송 중",
-    durationMs: 1200,
+    durationMs: 2100,
   },
-  { key: "validate", title: "데이터 유효성 검증 중", durationMs: 900 },
+  { key: "send_images", title: "이미지 청크 전송 중", durationMs: 1400 },
   { key: "done", title: "서버로 데이터 전송 완료", durationMs: 700 },
 ];
 
@@ -224,7 +228,7 @@ export default function ARScreen() {
             <Text type="h2">데이터 수집 동의</Text>
             <Text type="bodySmall" colorVariant="secondary">
               AR 주행 중 촬영된 영상/이미지는 서버로 전송되며, 리워드 지급에
-              사용됩니다. (Mock)
+              사용됩니다.
             </Text>
           </YStack>
 
@@ -280,21 +284,22 @@ export default function ARScreen() {
           {/* ✅ 종료(X) + HUD (AR 노드가 아닌 2D 오버레이) */}
           <YStack
             position="absolute"
-            top={insets.top + 10}
+            top={insets.top + 80}
             left={12}
             right={12}
             pointerEvents="box-none"
           >
-            <XStack jc="space-between" ai="flex-start">
+            <XStack jc="space-between" ai="center">
               <TamaguiButton
-                chromeless
-                circular
-                size="$4"
-                backgroundColor="$background3"
+                size={"$6"}
+                backgroundColor="$accent1"
                 pressStyle={{ backgroundColor: "$color4", opacity: 0.9 }}
                 onPress={handleExitSession}
-                icon={<X size={20} color="$text1" />}
-              />
+              >
+                <Text type="bodyLarge" fontWeight="$semibold" color="$color1">
+                  전송하기
+                </Text>
+              </TamaguiButton>
 
               <YStack gap="$xs" ai="flex-end">
                 <Card
@@ -314,46 +319,8 @@ export default function ARScreen() {
                     </Text>
                   </XStack>
                 </Card>
-
-                <Card
-                  bg="$background2"
-                  borderCurve="continuous"
-                  br="$xl"
-                  bw={1}
-                  boc="$color4"
-                  shop={0}
-                  p="$sm"
-                  opacity={0.9}
-                >
-                  <Text type="caption" colorVariant="secondary">
-                    영상 청크 전송: {Math.min(videoChunkSent, videoChunkTotal)}/
-                    {videoChunkTotal}
-                  </Text>
-                </Card>
               </YStack>
             </XStack>
-          </YStack>
-
-          <YStack
-            position="absolute"
-            left={12}
-            bottom={insets.bottom + 10}
-            pointerEvents="none"
-          >
-            <Card
-              bg="$background2"
-              borderCurve="continuous"
-              br="$xl"
-              bw={1}
-              boc="$color4"
-              shop={0}
-              p="$sm"
-              opacity={0.9}
-            >
-              <Text type="caption" colorVariant="secondary">
-                이미지 큐: {imageQueue}장 대기
-              </Text>
-            </Card>
           </YStack>
         </YStack>
       </ScreenContainer>
@@ -382,7 +349,7 @@ export default function ARScreen() {
           >
             <XStack ai="center" gap="$sm">
               <Spinner color="$accent1" />
-              <Text type="body" fontWeight="$semibold">
+              <Text type="h4" fontWeight="$semibold">
                 {processingProgressText}
               </Text>
             </XStack>
@@ -403,6 +370,7 @@ export default function ARScreen() {
                     )}
                     <Text
                       type="bodySmall"
+                      opacity={isActive ? 1 : 0.5}
                       colorVariant={
                         isDone ? "secondary" : isActive ? "primary" : "tertiary"
                       }
@@ -455,16 +423,40 @@ export default function ARScreen() {
           >
             <XStack ai="center" gap="$sm">
               <CircleCheck size={18} color="$accent1" />
-              <Text type="body" fontWeight="$semibold">
-                업로드 요약
+              <Text type="h4" fontWeight="$semibold">
+                성공 항목
               </Text>
             </XStack>
-            <Text type="caption" colorVariant="secondary">
-              영상 청크 {Math.min(videoChunkSent, videoChunkTotal)}/
-              {videoChunkTotal} · 이미지
-              {Math.max(0, 2 - imageQueue)}장
+            <Text type="bodySmall" colorVariant="secondary">
+              - 영상 청크 {Math.floor(Math.random() * 100)} 개가 정상적으로
+              전송되었습니다.
+            </Text>
+            <Text type="bodySmall" colorVariant="secondary" lineHeight={24}>
+              - 26개의 이미지가 유효성 검증을 통과하고 {"\n"}전송되었습니다.
             </Text>
           </Card>
+          {/* 
+          <Card
+            bg="$background2"
+            borderCurve="continuous"
+            br="$lg"
+            bw={1}
+            boc="$color4"
+            shop={0}
+            p="$lg"
+            gap="$sm"
+            mt={"$8"}
+          >
+            <XStack ai="center" gap="$sm">
+              <CircleX size={18} color="$error" />
+              <Text type="h4" fontWeight="$semibold">
+                실패 항목
+              </Text>
+            </XStack>
+            <Text type="bodySmall" colorVariant="secondary">
+              수집된 41개의 이미지중 15개의 이미지가 유효성 검증에 실패했습니다.
+            </Text>
+          </Card> */}
         </YStack>
 
         <Button
